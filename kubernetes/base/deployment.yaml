@@ -26,6 +26,8 @@ spec:
                 package: library
                 component: api
                 version: v1
+            annotations:
+                reloader.stakater.com/auto: "true"
         spec:
             serviceAccountName: api
             imagePullSecrets:
