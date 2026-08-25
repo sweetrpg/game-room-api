@@ -1,7 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: sweetrpg-shelf
+namespace: sweetrpg-game-room
 
 resources:
     - ../../base
@@ -17,7 +17,7 @@ labels:
           app: api
           version: v1
           platform: sweetrpg
-          package: shelf
+          package: game-room
           component: api
 
 generatorOptions:

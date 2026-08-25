@@ -7,7 +7,7 @@ metadata:
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-    traefik.ingress.kubernetes.io/router.middlewares: sweetrpg-shelf-strip-prefix-v1@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: sweetrpg-game-room-strip-prefix-v1@kubernetescrd
     kubernetes.io/ingress.class: traefik
 
 spec:
@@ -19,14 +19,14 @@ spec:
           # /0 always points at the latest version (currently v1); /1 is the pinned v1 route.
           # Frontends should call /0 unless they need a specific version.
           - pathType: Prefix
-            path: /api/0/shelf
+            path: /api/0/game-room
             backend:
               service:
                 name: api-v0
                 port:
                   name: http
           - pathType: Prefix
-            path: /api/1/shelf
+            path: /api/1/game-room
             backend:
               service:
                 name: api-v1

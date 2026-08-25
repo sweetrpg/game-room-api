@@ -29,14 +29,14 @@ import (
 	"github.com/sweetrpg/api-core.go/vo"
 	"github.com/sweetrpg/common.go/logging"
 	"github.com/sweetrpg/common.go/util"
+	"github.com/sweetrpg/game-room-api/authz"
+	"github.com/sweetrpg/game-room-api/cachettl"
+	"github.com/sweetrpg/game-room-api/constants"
+	"github.com/sweetrpg/game-room-api/docs"
+	"github.com/sweetrpg/game-room-api/ratelimit"
+	"github.com/sweetrpg/game-room-api/readiness"
+	"github.com/sweetrpg/game-room-api/server"
 	"github.com/sweetrpg/mongodb.go/database"
-	"github.com/sweetrpg/shelf-api/authz"
-	"github.com/sweetrpg/shelf-api/cachettl"
-	"github.com/sweetrpg/shelf-api/constants"
-	"github.com/sweetrpg/shelf-api/docs"
-	"github.com/sweetrpg/shelf-api/ratelimit"
-	"github.com/sweetrpg/shelf-api/readiness"
-	"github.com/sweetrpg/shelf-api/server"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	xrate "golang.org/x/time/rate"
 )
@@ -45,7 +45,7 @@ import (
 // fast instead of hanging past the caller's own timeout.
 const redisConnectTimeout = 5 * time.Second
 
-// @title Shelf API service
+// @title Game Room API service
 // @version 1.0
 // @description Swagger APIs
 // @termsOfService https://pilgrimagesoftware.com/terms/
@@ -317,7 +317,7 @@ func rateLimitClientKey(c *gin.Context) string {
 // cacheInvalidationMiddleware flushes the response cache after any write (POST/PUT/PATCH/
 // DELETE) that succeeds (2xx status). A full flush rather than a targeted per-key delete: the
 // page-cache key is derived from the full request URL, which every read route would need
-// reconstructing to invalidate precisely - not worth the complexity at Shelf's write volume.
+// reconstructing to invalidate precisely - not worth the complexity at Game Room's write volume.
 func cacheInvalidationMiddleware(store persistence.CacheStore, redisPool *redis.Pool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()

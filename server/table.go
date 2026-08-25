@@ -7,9 +7,9 @@ import (
 	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-gonic/gin"
 	apiv "github.com/sweetrpg/api-core.go/vo"
-	"github.com/sweetrpg/shelf-api/authz"
-	"github.com/sweetrpg/shelf-api/cachettl"
-	"github.com/sweetrpg/shelf-data.go/data"
+	"github.com/sweetrpg/game-room-api/authz"
+	"github.com/sweetrpg/game-room-api/cachettl"
+	"github.com/sweetrpg/game-room-data.go/data"
 )
 
 type createTableRequest struct {

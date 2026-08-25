@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 
 	"github.com/gomodule/redigo/redis"
-	"github.com/sweetrpg/shelf-api/ratelimit"
+	"github.com/sweetrpg/game-room-api/ratelimit"
 )
 
 var cachePool atomic.Pointer[redis.Pool]

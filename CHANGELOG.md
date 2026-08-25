@@ -6,7 +6,7 @@
 
 ### Changed
 
-- Python to Go migration: shelf-api is now a Go-based microservice using Gin, matching the platform's baseline for microservice development (see sweetrpg/platform's shelf-service OpenSpec change). Deployment infrastructure updated to match catalog-api's Go baseline.
+- Python to Go migration: game-room-api is now a Go-based microservice using Gin, matching the platform's baseline for microservice development (see sweetrpg/platform's shelf-service OpenSpec change). Deployment infrastructure updated to match catalog-api's Go baseline.
 
 ## v0.0.347 (2023-07-16)
 

@@ -3,8 +3,8 @@ package server
 import (
 	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-gonic/gin"
-	"github.com/sweetrpg/shelf-api/authz"
-	"github.com/sweetrpg/shelf-api/cachettl"
+	"github.com/sweetrpg/game-room-api/authz"
+	"github.com/sweetrpg/game-room-api/cachettl"
 )
 
 func SetupHandlers(g *gin.Engine, cache persistence.CacheStore, ttls cachettl.Config, authzClient *authz.Client) {

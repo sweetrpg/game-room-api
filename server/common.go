@@ -6,7 +6,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
 	apiv "github.com/sweetrpg/api-core.go/vo"
-	"github.com/sweetrpg/shelf-objects.go/models"
+	"github.com/sweetrpg/game-room-objects.go/models"
 )
 
 type volumeEntryRequest struct {

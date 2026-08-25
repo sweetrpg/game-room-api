@@ -16,14 +16,14 @@ spec:
             app: api
             version: v1
             platform: sweetrpg
-            package: shelf
+            package: game-room
             component: api
     template:
         metadata:
             labels:
                 platform: sweetrpg
                 app: api
-                package: shelf
+                package: game-room
                 component: api
                 version: v1
                 release: prometheus
@@ -33,7 +33,7 @@ spec:
                 prometheus.io/path: '/metrics'
                 prometheus.io/port: '8000'
                 openfeature.dev/enabled: "true"
-                openfeature.dev/featureflagsource: "sweetrpg-system/shelf-api"
+                openfeature.dev/featureflagsource: "sweetrpg-system/game-room-api"
         spec:
             serviceAccountName: api
             enableServiceLinks: false
@@ -41,7 +41,7 @@ spec:
                 - name: sweetrpg-registry
             containers:
                 - name: app
-                  image: shelf-api
+                  image: game-room-api
                   imagePullPolicy: Always
                   envFrom:
                       - configMapRef:

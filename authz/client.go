@@ -1,8 +1,8 @@
 // Package authz calls auth-api's POST /authz/check to resolve a caller's identity (subject).
-// Unlike catalog-api's role-gated authz, Shelf endpoints aren't role-based - every user manages
+// Unlike catalog-api's role-gated authz, Game Room endpoints aren't role-based - every user manages
 // their own library/wishlist/tables, and other users' collections are filtered by visibility
 // rather than by role. This package only ever needs the caller's subject, and treats a missing
-// or invalid token as an anonymous viewer rather than an error, since most Shelf reads are
+// or invalid token as an anonymous viewer rather than an error, since most Game Room reads are
 // legitimately anonymous-accessible (anything public).
 package authz
 

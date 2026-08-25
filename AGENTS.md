@@ -5,11 +5,11 @@ working in this repository.
 
 ## About This Project
 
-shelf-api is the HTTP microservice for the SweetRPG Shelf domain (library, wishlist, tables,
+game-room-api is the HTTP microservice for the SweetRPG Game Room domain (library, wishlist, tables,
 visibility). Migrated from Python to Go (see sweetrpg/platform's shelf-service OpenSpec change)
 to match the platform's Go microservice baseline. A thin Gin-based layer: `server/*.go` wires
-JSON:API routes to `shelf-data.go`'s data-access functions. Dependencies: api-core.go,
-shelf-data.go, shelf-objects.go, common.go, mongodb.go.
+JSON:API routes to `game-room-data.go`'s data-access functions. Dependencies: api-core.go,
+game-room-data.go, game-room-objects.go, common.go, mongodb.go.
 
 ## Committing Code
 

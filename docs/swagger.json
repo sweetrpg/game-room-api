@@ -2,7 +2,7 @@
     "swagger": "2.0",
     "info": {
         "description": "Swagger APIs",
-        "title": "Shelf API service",
+        "title": "Game Room API service",
         "termsOfService": "https://pilgrimagesoftware.com/terms/",
         "contact": {
             "name": "API Support",

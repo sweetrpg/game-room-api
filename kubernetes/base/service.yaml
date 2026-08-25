@@ -10,7 +10,7 @@ spec:
         app: api
         version: v1
         platform: sweetrpg
-        package: shelf
+        package: game-room
         component: api
     type: ClusterIP
     ports:

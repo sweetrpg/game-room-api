@@ -8,5 +8,5 @@ metadata:
 spec:
   stripPrefix:
     prefixes:
-      - /api/0/shelf
-      - /api/1/shelf
+      - /api/0/game-room
+      - /api/1/game-room

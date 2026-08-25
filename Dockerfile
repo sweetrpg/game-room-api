@@ -4,8 +4,8 @@ FROM golang:1.26.5 AS builder
 
 ENV GOPROXY=http://proxy.golang.org
 
-RUN mkdir -p /src/shelf-api
-WORKDIR /src/shelf-api
+RUN mkdir -p /src/game-room-api
+WORKDIR /src/game-room-api
 
 # Copy the Go Modules manifests
 COPY go.mod go.mod
@@ -15,7 +15,7 @@ COPY go.sum go.sum
 RUN go mod download && go mod verify
 
 ADD . .
-RUN CGO_ENABLED=0 GOOS=linux go build -v -o /bin/server cmd/shelf-api/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -v -o /bin/server cmd/game-room-api/main.go
 
 FROM alpine
 
@@ -48,7 +48,7 @@ ENV PORT="8000"
 ENV REDIS_HOST=""
 ENV REDIS_PORT="6379"
 ENV MONGODB_URI=""
-ENV MONGODB_DATABASE="shelf-api"
+ENV MONGODB_DATABASE="game-room-api"
 ENV GIN_MODE="release"
 ENV VERSION=${BUILD_VERSION}
 

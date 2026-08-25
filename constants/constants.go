@@ -27,7 +27,7 @@ const (
 
 // Value constants
 const (
-	ServiceName = "shelf-api"
+	ServiceName = "game-room-api"
 
 	// ProfilingEnabledFlag is the feature-flag key gating continuous profiling, evaluated via
 	// api-core.go/featureflags.

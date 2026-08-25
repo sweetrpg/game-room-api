@@ -24,7 +24,7 @@ func ResolveViewer(client *Client) gin.HandlerFunc {
 			return
 		}
 
-		result, err := client.Check(c.Request.Context(), token, "shelf-api")
+		result, err := client.Check(c.Request.Context(), token, "game-room-api")
 		if err != nil {
 			logging.Logger.Debug("authz check failed, treating caller as anonymous", "error", err.Error())
 			c.Set(viewerContextKey, "")
@@ -48,7 +48,7 @@ func Viewer(c *gin.Context) string {
 }
 
 // RequireOwner aborts with 403 unless the resolved viewer matches the :user_id path param -
-// every Shelf write endpoint is scoped to the caller's own collection.
+// every Game Room write endpoint is scoped to the caller's own collection.
 func RequireOwner() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		viewer := Viewer(c)
