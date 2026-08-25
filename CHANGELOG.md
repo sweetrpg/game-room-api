@@ -1,4 +1,11 @@
 
+## 0.1.1 - 2026-08-25
+
+### Fixed
+- Remove dangling mongodb-atlas-service-entry.yaml reference
+
+
+
 ## 0.1.0 - 2026-08-25
 
 ### Added
