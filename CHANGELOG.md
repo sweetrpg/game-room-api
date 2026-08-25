@@ -1,6 +1,9 @@
 
 ## 0.1.0 - 2026-08-25
 
+
+## 0.1.0 - 2026-08-25
+
 ### Added
 - Add AtlasDatabaseUser CR for shelf-api
 - Add Shelf API Go application code
