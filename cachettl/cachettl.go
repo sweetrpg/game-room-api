@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sweetrpg/shelf-api/constants"
 	"github.com/sweetrpg/common.go/logging"
 	"github.com/sweetrpg/common.go/util"
+	"github.com/sweetrpg/shelf-api/constants"
 )
 
 const defaultTTLFallback = time.Hour

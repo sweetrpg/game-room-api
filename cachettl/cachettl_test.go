@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sweetrpg/shelf-api/constants"
 	"github.com/sweetrpg/common.go/logging"
+	"github.com/sweetrpg/shelf-api/constants"
 )
 
 func TestMain(m *testing.M) {
