@@ -9,7 +9,6 @@ resources:
     - configmaps.yaml
     - ingress.yaml
     - middlewares.yaml
-    - mongodb-atlas-service-entry.yaml
     - secrets.yaml
 
 labels:
