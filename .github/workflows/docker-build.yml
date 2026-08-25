@@ -147,6 +147,10 @@ jobs:
                   docker buildx imagetools inspect ghcr.io/sweetrpg/game-room-api:${{ needs.meta.outputs.build-version }}
             - name: Create Sentry release
               uses: getsentry/action-release@v3
+              # Sentry isn't provisioned for this repo yet (no SENTRY_AUTH_TOKEN secret, stale
+              # SENTRY_PROJECT var) - non-blocking so a missing observability integration
+              # doesn't hold up the image push or the ArgoCD deploy-bump below it.
+              continue-on-error: true
               env:
                   SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
                   SENTRY_ORG: ${{ vars.SENTRY_ORG }}
