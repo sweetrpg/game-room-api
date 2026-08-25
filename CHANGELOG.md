@@ -1,3 +1,27 @@
+
+## 0.1.0 - 2026-08-25
+
+### Added
+- Add AtlasDatabaseUser CR for shelf-api
+- Add Shelf API Go application code
+
+
+### Changed
+- Rename library-api to shelf-api (#150)
+- Rename shelf-api references to game-room-api
+- Migrate shelf-api Python to Go infrastructure
+- Rename module from shelf-api to game-room-api
+- Rename shelf-api identifiers to game-room-api
+
+
+### Fixed
+- Secret version
+- Use ClusterIP instead of LoadBalancer for api Service (#149)
+- Remove HPA and PDB from dev overlay
+- Generate real swagger docs, align swaggo/swag version, gofmt
+- Update configmaps/secrets for the Go migration
+
+
 # Changelog
 
 <!--next-version-placeholder-->
