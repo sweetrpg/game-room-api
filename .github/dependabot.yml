@@ -5,7 +5,7 @@
 
 version: 2
 updates:
-    - package-ecosystem: "pip" # See documentation for possible values
+    - package-ecosystem: "gomod" # See documentation for possible values
       directory: "/" # Location of package manifests
       schedule:
           interval: "weekly"
@@ -13,6 +13,14 @@ updates:
       assignees:
       - "paulyhedral"
     - package-ecosystem: "github-actions"
+      directory: "/"
+      schedule:
+          interval: "daily"
+    - package-ecosystem: "devcontainers"
+      directory: "/"
+      schedule:
+          interval: "daily"
+    - package-ecosystem: "docker"
       directory: "/"
       schedule:
           interval: "daily"
