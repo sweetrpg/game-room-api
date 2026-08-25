@@ -3,17 +3,30 @@ apiVersion: v1
 kind: ConfigMap
 
 metadata:
-    name: api-env
+  name: api-env
 
 data:
-    PORT: "8281"
-    SERVICE_CHECK_URL: unset
-    HEALTH_CHECK_URL: unset
-    BUILD_INFO_PATH: /app/build-info.json
-    SERVICE_REGISTRATION_URL: "http://consul.sweetrpg-support.svc.cluster.local:1234"
-    # SERVER_NAME: dev.sweetrpg.com
-    JAEGER_SERVICE_NAME: api.sweetrpg-library
-    JAEGER_SAMPLER_TYPE: ratelimiting
-    JAEGER_SAMPLER_PARAM: "1"
-    JAEGER_PROPAGATION: b3
-    JAEGER_ENDPOINT: http://jaeger-collector.istio-system.svc.cluster.local:14268/api/traces
+  ENV: dev
+  # mongodb.go builds the connection string from these DB_* parts rather than one opaque
+  # DB_URI - only the password (DB_PW, in secrets.yaml) is sensitive.
+  DB_SCHEME: mongodb+srv
+  DB_HOST: cluster0.z9nxg.mongodb.net
+  DB_USER: game-room-api
+  DB_NAME: sweetrpg-game-room
+  DB_OPTS: retryWrites=true&w=majority
+  BUILD_INFO_PATH: /app/config/build-info.json
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo-distributor.observability.svc.cluster.local:4318/
+  PYROSCOPE_SERVER_ADDRESS: http://pyroscope.observability.svc.cluster.local:4040
+  PYROSCOPE_TENANT_ID: psw
+  SENTRY_RELEASE: "1"
+  # No dedicated cache instance for Game Room yet (see secrets.yaml's game-room-api-cache comment) -
+  # REDIS_HOST deliberately unset until support/infrastructure provisions one. The service falls
+  # back to its in-memory cache store, a fully supported mode.
+  CACHE_TTLS: "library=30m,wishlist=30m,tables=15m"
+  CACHE_DEFAULT_TTL: 1h
+  INGRESS_BASE_PATH: /api/0/game-room
+  INGRESS_HOST: dev.sweetrpg.com
+  INGRESS_SCHEMES: http,https
+  # authz.Client fails open to an empty baseURL rather than refusing to start - unset here
+  # silently returns every viewer as anonymous rather than a startup error.
+  AUTH_API_URL: http://api-v1.sweetrpg-auth.svc.cluster.local:8000

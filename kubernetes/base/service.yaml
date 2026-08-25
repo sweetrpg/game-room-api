@@ -10,10 +10,10 @@ spec:
         app: api
         version: v1
         platform: sweetrpg
-        package: library
+        package: game-room
         component: api
     type: ClusterIP
     ports:
         - name: http
-          port: 8281
+          port: 8000
           targetPort: http

@@ -16,25 +16,32 @@ spec:
             app: api
             version: v1
             platform: sweetrpg
-            package: library
+            package: game-room
             component: api
     template:
         metadata:
             labels:
                 platform: sweetrpg
                 app: api
-                package: library
+                package: game-room
                 component: api
                 version: v1
+                release: prometheus
             annotations:
                 reloader.stakater.com/auto: "true"
+                prometheus.io/scrape: "true"
+                prometheus.io/path: '/metrics'
+                prometheus.io/port: '8000'
+                openfeature.dev/enabled: "true"
+                openfeature.dev/featureflagsource: "sweetrpg-system/game-room-api"
         spec:
             serviceAccountName: api
+            enableServiceLinks: false
             imagePullSecrets:
                 - name: sweetrpg-registry
             containers:
                 - name: app
-                  image: ghcr.io/sweetrpg/library-api:latest
+                  image: game-room-api
                   imagePullPolicy: Always
                   envFrom:
                       - configMapRef:
@@ -51,39 +58,42 @@ spec:
                             name: api-cache
                   env: []
                   ports:
-                      - containerPort: 8281
+                      - containerPort: 8000
                         name: http
                   resources:
                       requests:
                           cpu: "20m"
                           memory: "55Mi"
                       limits:
-                          cpu: "1.0"
+                          cpu: "1"
                           memory: "1Gi"
-                  #   livenessProbe:
-                  #       httpGet:
-                  #           path: /health/ping
-                  #           port: 8281
-                  #       initialDelaySeconds: 90
-                  #       timeoutSeconds: 10
-                  #   readinessProbe:
-                  #       httpGet:
-                  #           path: /health/ping
-                  #           port: 8281
-                  #       initialDelaySeconds: 30
-                  #       timeoutSeconds: 10
+                  livenessProbe:
+                        httpGet:
+                            path: /status/ping
+                            port: http
+                        initialDelaySeconds: 90
+                        timeoutSeconds: 10
+                        periodSeconds: 10
+                  readinessProbe:
+                        # Deliberately the shallow /status/ping, not /status/health - readiness
+                        # gates whether this pod receives traffic at all, and /status/health does
+                        # live Mongo + Redis checks against Atlas's M0 (shared, free-tier)
+                        # cluster. Every replica hits the same Atlas cluster, so a single
+                        # transient blip there was taking every pod NotReady simultaneously -
+                        # a full outage from a momentary dependency hiccup the process itself
+                        # was otherwise fine to keep serving through. /status/health stays
+                        # available as an observability endpoint; it just no longer controls
+                        # routing.
+                        httpGet:
+                            path: /status/ping
+                            port: http
+                        initialDelaySeconds: 10
+                        timeoutSeconds: 10
+                        periodSeconds: 10
                   volumeMounts:
                       - mountPath: /data
                         name: data
-                      - mountPath: /config
-                        name: config
             volumes:
-                - name: config
-                  secret:
-                      secretName: api-files
-                      items:
-                          - key: newrelic.ini
-                            path: newrelic.ini
                 - name: data
                   emptyDir: {}
             restartPolicy: Always

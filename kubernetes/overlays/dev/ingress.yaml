@@ -1,22 +1,40 @@
 ---
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 
 metadata:
   name: api-v1
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: sweetrpg-game-room-strip-prefix-v1@kubernetescrd
+    kubernetes.io/ingress.class: traefik
 
 spec:
-  entryPoints:
-    - web
-  routes:
-    - match: Host(`dev.sweetrpg.com`) && (PathPrefix(`/api/0/library`) || PathPrefix(`/api/1/library`))
-      kind: Rule
-      services:
-        - kind: Service
-          name: api-v1
-          port: 8281
-          passHostHeader: true
-          responseForwarding:
-            flushInterval: 1ms
-      middlewares:
-        - name: strip-prefix
+  ingressClassName: traefik
+  rules:
+    - host: dev.sweetrpg.com
+      http:
+        paths:
+          # /0 always points at the latest version (currently v1); /1 is the pinned v1 route.
+          # Frontends should call /0 unless they need a specific version.
+          - pathType: Prefix
+            path: /api/0/game-room
+            backend:
+              service:
+                name: api-v0
+                port:
+                  name: http
+          - pathType: Prefix
+            path: /api/1/game-room
+            backend:
+              service:
+                name: api-v1
+                port:
+                  name: http
+  tls:
+    - hosts:
+        - dev.sweetrpg.com
+      # Shared secretName across every frontend's Ingress for this host, deliberately - see
+      # main-web's Ingress and docs/git-repos.md.
+      secretName: sweetrpg-dev-tls

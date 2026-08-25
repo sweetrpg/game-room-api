@@ -1,0 +1,618 @@
+definitions:
+  server.createTableRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  server.previewResponse:
+    properties:
+      affected_volume_ids:
+        items:
+          type: string
+        type: array
+    type: object
+  server.visibilityRequest:
+    properties:
+      visibility:
+        type: string
+    type: object
+  server.volumeEntryRequest:
+    properties:
+      volume_id:
+        type: string
+    type: object
+  vo.HealthResponseVO:
+    properties:
+      collections:
+        items:
+          type: string
+        type: array
+      database:
+        type: string
+      errors:
+        type: integer
+      messages:
+        items:
+          type: string
+        type: array
+      ping:
+        type: string
+    type: object
+  vo.PingResponseVO:
+    properties:
+      date:
+        type: string
+      hostname:
+        type: string
+    type: object
+info:
+  contact:
+    email: admin@sweetrpg.com
+    name: API Support
+    url: https://sweetrpg.com
+  description: Swagger APIs
+  license:
+    name: MIT
+    url: https://mit-license.org/
+  termsOfService: https://pilgrimagesoftware.com/terms/
+  title: Game Room API service
+  version: "1.0"
+paths:
+  /status/health:
+    get:
+      description: Health check
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/vo.HealthResponseVO'
+      summary: Health check
+      tags:
+      - status
+  /status/ping:
+    get:
+      description: Ping
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/vo.PingResponseVO'
+      summary: Ping
+      tags:
+      - status
+  /users/{user_id}/library:
+    get:
+      description: Get a user's library, filtered to what the caller may see.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Get library
+      tags:
+      - library
+  /users/{user_id}/library/default-visibility:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: New default visibility
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/server.visibilityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Set library default visibility
+      tags:
+      - library
+  /users/{user_id}/library/default-visibility/preview:
+    post:
+      consumes:
+      - application/json
+      description: Dry-run a default-visibility change, returning the volume IDs of
+        entries that would become more exposed - backs the warning dialog before the
+        caller commits to the change.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Proposed new default visibility
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/server.visibilityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.previewResponse'
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Preview library default-visibility change
+      tags:
+      - library
+  /users/{user_id}/library/entries:
+    post:
+      consumes:
+      - application/json
+      description: Link a catalog volume into the caller's own library.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Volume to add
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/server.volumeEntryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Add library entry
+      tags:
+      - library
+  /users/{user_id}/library/entries/{volume_id}:
+    delete:
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Volume ID
+        in: path
+        name: volume_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Remove library entry
+      tags:
+      - library
+  /users/{user_id}/library/entries/{volume_id}/visibility:
+    put:
+      consumes:
+      - application/json
+      description: Set (or clear, with an empty visibility) a per-entry visibility
+        override.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Volume ID
+        in: path
+        name: volume_id
+        required: true
+        type: string
+      - description: New override (empty clears it)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/server.visibilityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Set library entry visibility override
+      tags:
+      - library
+  /users/{user_id}/tables:
+    get:
+      description: List a user's tables, filtered to what the caller may see.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: List tables
+      tags:
+      - tables
+    post:
+      consumes:
+      - application/json
+      description: Create a new table, defaulting to private visibility.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Table name
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/server.createTableRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Create table
+      tags:
+      - tables
+  /users/{user_id}/tables/{id}:
+    delete:
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Table ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Delete table
+      tags:
+      - tables
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Table ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Get table
+      tags:
+      - tables
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Table ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New name
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/server.createTableRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Rename table
+      tags:
+      - tables
+  /users/{user_id}/tables/{id}/visibility:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Table ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New visibility
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/server.visibilityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Set table visibility
+      tags:
+      - tables
+  /users/{user_id}/tables/{id}/volumes:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Table ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Volume to add
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/server.volumeEntryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Add table volume
+      tags:
+      - tables
+  /users/{user_id}/tables/{id}/volumes/{volume_id}:
+    delete:
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Table ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Volume ID
+        in: path
+        name: volume_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Remove table volume
+      tags:
+      - tables
+  /users/{user_id}/wishlist:
+    get:
+      description: Get a user's wishlist, or 404 if the caller may not see it.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Get wishlist
+      tags:
+      - wishlist
+  /users/{user_id}/wishlist/entries:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Volume to add
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/server.volumeEntryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Add wishlist entry
+      tags:
+      - wishlist
+  /users/{user_id}/wishlist/entries/{volume_id}:
+    delete:
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Volume ID
+        in: path
+        name: volume_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Remove wishlist entry
+      tags:
+      - wishlist
+  /users/{user_id}/wishlist/visibility:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: New visibility
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/server.visibilityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Set wishlist visibility
+      tags:
+      - wishlist
+swagger: "2.0"
