@@ -8,8 +8,8 @@ manage.py
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
 
-from sweetrpg_shelf_api.application.main import create_app
-from sweetrpg_shelf_api.application.db import db
+from sweetrpg_game_room_api.application.main import create_app
+from sweetrpg_game_room_api.application.db import db
 
 app = create_app()
 

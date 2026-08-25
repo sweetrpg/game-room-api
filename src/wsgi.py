@@ -4,7 +4,7 @@ wsgi.py
 - WSGI entrypoint.
 """
 
-from sweetrpg_shelf_api.application.main import create_app
+from sweetrpg_game_room_api.application.main import create_app
 
 
 app = create_app()

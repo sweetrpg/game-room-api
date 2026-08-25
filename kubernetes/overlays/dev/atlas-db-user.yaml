@@ -1,9 +1,9 @@
 ---
-# shelf-api's own database user, scoped to only its own database - the shared "sweetrpg" user
+# game-room-api's own database user, scoped to only its own database - the shared "sweetrpg" user
 # (readWriteAnyDatabase) is not for service use. Same pattern as admin-api/catalog-api/users-api's
 # own kubernetes/overlays/dev/atlas-db-user.yaml.
 #
-# Named "shelf-api"/sweetrpg-shelf to match the live Atlas database user (already provisioned
+# Named "game-room-api"/sweetrpg-game-room to match the live Atlas database user (already provisioned
 # manually ahead of this CR) rather than this directory's surrounding library-api naming - the
 # Shelf rebuild hasn't touched the rest of these manifests yet (namespace, secret names, and
 # Akeyless paths here are still the old library-api ones). This CR intentionally gets ahead of
@@ -12,18 +12,18 @@ apiVersion: atlas.mongodb.com/v1
 kind: AtlasDatabaseUser
 
 metadata:
-  name: shelf-api
+  name: game-room-api
 
 spec:
   databaseName: admin
-  username: shelf-api
+  username: game-room-api
   passwordSecretRef:
-    name: shelf-api-db-credentials
+    name: game-room-api-db-credentials
   projectRef:
     name: sweetrpg
     namespace: sweetrpg-db
   roles:
-    - databaseName: sweetrpg-shelf
+    - databaseName: sweetrpg-game-room
       roleName: readWrite
   x509Type: NONE
 
@@ -32,7 +32,7 @@ apiVersion: external-secrets.io/v1
 kind: ExternalSecret
 
 metadata:
-  name: shelf-api-db-credentials
+  name: game-room-api-db-credentials
 
 spec:
   refreshInterval: 1h
@@ -40,20 +40,20 @@ spec:
     name: akeyless
     kind: ClusterSecretStore
   target:
-    name: shelf-api-db-credentials
+    name: game-room-api-db-credentials
     template:
       metadata:
         labels:
           atlas.mongodb.com/type: credentials
     creationPolicy: Owner
   dataFrom:
-    # Akeyless path /sweetrpg/shelf/api/db doesn't exist yet - needs to be created (DB_PASSWORD
+    # Akeyless path /sweetrpg/game-room/api/db doesn't exist yet - needs to be created (DB_PASSWORD
     # field) before this ExternalSecret resolves and the Operator can set the live user's
-    # password to match. No live consumer currently authenticates as shelf-api (sweetrpg-library
+    # password to match. No live consumer currently authenticates as game-room-api (sweetrpg-library
     # has no running pods under the new naming yet), so provisioning a fresh password here is
     # safe - nothing to break.
     - extract:
-        key: /sweetrpg/shelf/api/db
+        key: /sweetrpg/game-room/api/db
       rewrite:
         - regexp:
             source: "DB_PASSWORD"

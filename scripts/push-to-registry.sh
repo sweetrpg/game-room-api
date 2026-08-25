@@ -4,7 +4,7 @@ set -e
 
 export DOCKER_BUILDKIT=1
 registry=registry.sweetrpg.com
-name=sweetrpg-shelf-api
+name=sweetrpg-game-room-api
 
 docker push \
     ${registry}/${name}

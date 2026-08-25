@@ -7,13 +7,13 @@ import jinja2
 from flask import Blueprint, request, render_template, session, jsonify, current_app
 from werkzeug.exceptions import HTTPException
 
-from sweetrpg_shelf_api.application import constants
+from sweetrpg_game_room_api.application import constants
 
 
-# from sweetrpg_shelf_api.application.models import constants as model_constants
+# from sweetrpg_game_room_api.application.models import constants as model_constants
 # from .. import render_page, requires_auth
-# from sweetrpg_shelf_api.application.models.user import User
-# from sweetrpg_shelf_api.application.utils.user import has_role
+# from sweetrpg_game_room_api.application.models.user import User
+# from sweetrpg_game_room_api.application.utils.user import has_role
 
 
 # def requires_auth(f):
@@ -154,7 +154,7 @@ from flask_rest_jsonapi import Api
 
 api = Api()
 
-# from sweetrpg_shelf_api.application.blueprints.api.common import game_systems, utils
-# from sweetrpg_shelf_api.application.blueprints.api.initiative import encounters, groups
-from sweetrpg_shelf_api.application.blueprints import volumes
-from sweetrpg_shelf_api.application.blueprints import persons
+# from sweetrpg_game_room_api.application.blueprints.api.common import game_systems, utils
+# from sweetrpg_game_room_api.application.blueprints.api.initiative import encounters, groups
+from sweetrpg_game_room_api.application.blueprints import volumes
+from sweetrpg_game_room_api.application.blueprints import persons

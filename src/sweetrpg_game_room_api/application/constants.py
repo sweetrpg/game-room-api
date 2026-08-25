@@ -22,7 +22,7 @@ KANKA_AUDIENCE = "KANKA_AUDIENCE"
 SENTRY_DSN = "SENTRY_DSN"
 SENTRY_ENV = "SENTRY_ENV"
 
-APPLICATION_NAME = "sweetrpg-shelf-api"
+APPLICATION_NAME = "sweetrpg-game-room-api"
 PROFILE_KEY = "profile"
 JWT_PAYLOAD = "jwt_payload"
 CURRENT_USER_ID = "current_user_id"
