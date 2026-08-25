@@ -7,8 +7,8 @@ import logging
 
 from sweetrpg_api_core.blueprints.health import register_health_check_service_hook
 
-from sweetrpg_shelf_api.application.cache import cache
-from sweetrpg_shelf_api.application.db import db
+from sweetrpg_game_room_api.application.cache import cache
+from sweetrpg_game_room_api.application.db import db
 
 
 def _db_check():

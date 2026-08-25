@@ -4,11 +4,11 @@ __author__ = "Paul Schifferer <dm@sweetrpg.com>"
 """
 
 from flask_rest_jsonapi import ResourceList, ResourceDetail, ResourceRelationship
-from  sweetrpg_shelf_objects.api.system.schema import SystemAPISchema
+from  sweetrpg_game_room_objects.api.system.schema import SystemAPISchema
 from sweetrpg_api_core.data import APIData
-from sweetrpg_shelf_objects.model.system import System
-from sweetrpg_shelf_api.application.db import db
-from sweetrpg_shelf_api.application.blueprints.setup import model_info
+from sweetrpg_game_room_objects.model.system import System
+from sweetrpg_game_room_api.application.db import db
+from sweetrpg_game_room_api.application.blueprints.setup import model_info
 
 
 class SystemList(ResourceList):

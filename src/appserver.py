@@ -5,7 +5,7 @@ appserver.py
 """
 
 if __name__ == "__main__":
-    from sweetrpg_shelf_api.application.main import create_app
+    from sweetrpg_game_room_api.application.main import create_app
 
     app = create_app()
     app.run("0.0.0.0", app.config.get("PORT", 5000))

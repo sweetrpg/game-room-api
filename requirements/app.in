@@ -27,6 +27,6 @@ requests~=2.0
 sentry-sdk[flask]~=2.61
 sweetrpg-api-core
 sweetrpg-db
-sweetrpg-shelf-objects
+sweetrpg-game-room-objects
 sweetrpg-model-core
 urllib3~=2.0

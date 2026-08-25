@@ -7,7 +7,7 @@ OAuth functions
 import os
 # from authlib.flask.client import OAuth
 from authlib.integrations.flask_client import OAuth
-from sweetrpg_shelf_api.application import constants
+from sweetrpg_game_room_api.application import constants
 from flask import current_app
 
 

@@ -40,7 +40,7 @@ jobs:
               uses: docker/metadata-action@v6
               with:
                   images: |
-                      ghcr.io/sweetrpg/shelf-api
+                      ghcr.io/sweetrpg/game-room-api
                   tags: |
                       type=raw,value=latest
                       type=raw,value=${{ steps.previoustag.outputs.tag }}
@@ -76,11 +76,11 @@ jobs:
                       BUILD_SHA=${{ github.sha }}
                       BUILD_DATE=${{ steps.getbuilddate.outputs.isodate }}
                       BUILD_VERSION=${{ steps.previoustag.outputs.tag }}
-            #          tags: registry.sweetrpg.com/sweetrpg-shelf-api:latest
+            #          tags: registry.sweetrpg.com/sweetrpg-game-room-api:latest
             # - name: Scan image
             #   uses: sysdiglabs/scan-action@v1
             #   with:
-            #     image-tag: registry.sweetrpg.com/sweetrpg-shelf-api:latest
+            #     image-tag: registry.sweetrpg.com/sweetrpg-game-room-api:latest
             #     sysdig-secure-token: ${{ secrets.SYSDIG_SECURE_TOKEN }}
             - name: Create Sentry release
               uses: getsentry/action-release@v3

@@ -6,7 +6,7 @@ set -o pipefail
 
 scriptdir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
 
-export FLASK_APP=sweetrpg_shelf_api.application.main:create_app
+export FLASK_APP=sweetrpg_game_room_api.application.main:create_app
 export FLASK_ENV=development
 
 pushd src

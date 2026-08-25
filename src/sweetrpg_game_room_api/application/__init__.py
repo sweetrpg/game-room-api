@@ -11,7 +11,7 @@ import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
 
-from sweetrpg_shelf_api.application import constants
+from sweetrpg_game_room_api.application import constants
 
 sentry_sdk.init(dsn=os.environ[constants.SENTRY_DSN],
                 traces_sample_rate=0.2,
