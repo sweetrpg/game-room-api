@@ -1,16 +1,7 @@
 name: Debug
 
 on:
-    create:
-        tags:
-            - '*'
-    release:
-        types:
-            - published
-            - created
-    push:
-        branches:
-            - '*'
+    workflow_dispatch: 
 
 jobs:
   debug:
