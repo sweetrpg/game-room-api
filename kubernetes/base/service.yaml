@@ -7,11 +7,10 @@ metadata:
 
 spec:
     selector:
-        app: api
-        version: v1
-        platform: sweetrpg
-        package: game-room
-        component: api
+        app.kubernetes.io/name: game-room-api
+        app.kubernetes.io/version: v1
+        app.kubernetes.io/component: api
+        app.kubernetes.io/part-of: game-room
     type: ClusterIP
     ports:
         - name: http
