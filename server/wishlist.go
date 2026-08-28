@@ -16,6 +16,21 @@ type createWishlistRequest struct {
 	Name string `json:"name"`
 }
 
+// wishlistWriteFailure resolves a write's nil/false failure result into the right status: 403
+// if the wishlist exists under a different owner, 404 if it doesn't exist at all.
+func wishlistWriteFailure(c *gin.Context) {
+	wl, err := data.GetWishlist(c.Request.Context(), c.Param("wishlist_id"))
+	if err != nil {
+		internalError(c, err)
+		return
+	}
+	if wl != nil {
+		c.JSON(http.StatusForbidden, apiv.ErrorVO{Error: "forbidden", Message: "Caller does not own this resource"})
+		return
+	}
+	c.JSON(http.StatusNotFound, gin.H{})
+}
+
 func setupWishlistHandlers(g *gin.Engine, store persistence.CacheStore, ttls cachettl.Config, authzClient *authz.Client) {
 	ttl := ttls.TTL("wishlist")
 	viewer := authz.ResolveViewer(authzClient)
@@ -148,8 +163,13 @@ func createWishlist(c *gin.Context) {
 //	@Failure		500	{object}	interface{}
 //	@Router			/users/{user_id}/wishlists/{wishlist_id} [delete]
 func deleteWishlist(c *gin.Context) {
-	if err := data.DeleteWishlist(c.Request.Context(), c.Param("wishlist_id")); err != nil {
+	deleted, err := data.DeleteWishlist(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"))
+	if err != nil {
 		internalError(c, err)
+		return
+	}
+	if !deleted {
+		wishlistWriteFailure(c)
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -174,9 +194,13 @@ func addWishlistEntry(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
 		return
 	}
-	wl, err := data.AddWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), req.VolumeID)
+	wl, err := data.AddWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), req.VolumeID)
 	if err != nil {
 		internalError(c, err)
+		return
+	}
+	if wl == nil {
+		wishlistWriteFailure(c)
 		return
 	}
 	c.JSON(http.StatusOK, data.WishlistToVO(wl, authz.Viewer(c), false, false))
@@ -194,9 +218,13 @@ func addWishlistEntry(c *gin.Context) {
 //	@Failure		500				{object}	interface{}
 //	@Router			/users/{user_id}/wishlists/{wishlist_id}/entries/{volume_id} [delete]
 func removeWishlistEntry(c *gin.Context) {
-	wl, err := data.RemoveWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), c.Param("volume_id"))
+	wl, err := data.RemoveWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), c.Param("volume_id"))
 	if err != nil {
 		internalError(c, err)
+		return
+	}
+	if wl == nil {
+		wishlistWriteFailure(c)
 		return
 	}
 	c.JSON(http.StatusOK, data.WishlistToVO(wl, authz.Viewer(c), false, false))
@@ -221,9 +249,13 @@ func setWishlistVisibility(c *gin.Context) {
 	if !ok {
 		return
 	}
-	wl, err := data.SetWishlistVisibility(c.Request.Context(), c.Param("wishlist_id"), v)
+	wl, err := data.SetWishlistVisibility(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), v)
 	if err != nil {
 		internalError(c, err)
+		return
+	}
+	if wl == nil {
+		wishlistWriteFailure(c)
 		return
 	}
 	c.JSON(http.StatusOK, data.WishlistToVO(wl, authz.Viewer(c), false, false))

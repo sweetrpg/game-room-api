@@ -103,6 +103,58 @@ func TestDeleteWishlistRequestRemovesOnlyThatWishlist(t *testing.T) {
 	}
 }
 
+func TestNonOwnerWriteRequestsAreForbidden(t *testing.T) {
+	setupTestDB(t)
+	owner := primitive.NewObjectID().Hex()
+	intruder := primitive.NewObjectID().Hex()
+
+	createC, createW := newTestContext(t, http.MethodPost, "/users/"+owner+"/wishlists", createWishlistRequest{Name: "Mine"}, gin.Params{{Key: "user_id", Value: owner}}, owner)
+	createWishlist(createC)
+	var created objvo.WishlistVO
+	if err := json.Unmarshal(createW.Body.Bytes(), &created); err != nil {
+		t.Fatalf("decode create response: %v", err)
+	}
+
+	// The intruder's request passes owner middleware's :user_id check by naming itself as the
+	// path owner, but targets someone else's wishlist_id - the IDOR this whole path is guarding
+	// against. RequireOwner is bypassed in these tests (handlers are called directly), so this
+	// exercises exactly the data-layer ownership check that must catch it instead.
+	deleteC, _ := newTestContext(t, http.MethodDelete, "/users/"+intruder+"/wishlists/"+created.ID, nil,
+		gin.Params{{Key: "user_id", Value: intruder}, {Key: "wishlist_id", Value: created.ID}}, intruder)
+	deleteWishlist(deleteC)
+	if deleteC.Writer.Status() != http.StatusForbidden {
+		t.Fatalf("delete by non-owner status = %d, want 403", deleteC.Writer.Status())
+	}
+
+	entryC, entryW := newTestContext(t, http.MethodPost, "/users/"+intruder+"/wishlists/"+created.ID+"/entries", volumeEntryRequest{VolumeID: "vol-1"},
+		gin.Params{{Key: "user_id", Value: intruder}, {Key: "wishlist_id", Value: created.ID}}, intruder)
+	addWishlistEntry(entryC)
+	if entryW.Code != http.StatusForbidden {
+		t.Fatalf("add entry by non-owner status = %d, want 403, body = %s", entryW.Code, entryW.Body.String())
+	}
+
+	visC, visW := newTestContext(t, http.MethodPut, "/users/"+intruder+"/wishlists/"+created.ID+"/visibility", visibilityRequest{Visibility: "public"},
+		gin.Params{{Key: "user_id", Value: intruder}, {Key: "wishlist_id", Value: created.ID}}, intruder)
+	setWishlistVisibility(visC)
+	if visW.Code != http.StatusForbidden {
+		t.Fatalf("set visibility by non-owner status = %d, want 403, body = %s", visW.Code, visW.Body.String())
+	}
+
+	stillThereC, stillThereW := newTestContext(t, http.MethodGet, "/users/"+owner+"/wishlists/"+created.ID, nil,
+		gin.Params{{Key: "user_id", Value: owner}, {Key: "wishlist_id", Value: created.ID}}, owner)
+	getWishlistByID(stillThereC)
+	if stillThereW.Code != http.StatusOK {
+		t.Fatalf("owner get after intruder attempts status = %d, want 200", stillThereW.Code)
+	}
+	var stillThere objvo.WishlistVO
+	if err := json.Unmarshal(stillThereW.Body.Bytes(), &stillThere); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if stillThere.Visibility != "private" || len(stillThere.Entries) != 0 {
+		t.Fatalf("intruder mutated the wishlist despite 403s: %+v", stillThere)
+	}
+}
+
 func TestOldSingularRouteProxiesToFirstWishlist(t *testing.T) {
 	setupTestDB(t)
 	userID := primitive.NewObjectID().Hex()
