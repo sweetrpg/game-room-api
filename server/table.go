@@ -16,6 +16,21 @@ type createTableRequest struct {
 	Name string `json:"name"`
 }
 
+// tableWriteFailure resolves a write's nil/false failure result into the right status: 403 if
+// the table exists under a different owner, 404 if it doesn't exist at all.
+func tableWriteFailure(c *gin.Context) {
+	tbl, err := data.GetTable(c.Request.Context(), c.Param("id"))
+	if err != nil {
+		internalError(c, err)
+		return
+	}
+	if tbl != nil {
+		c.JSON(http.StatusForbidden, apiv.ErrorVO{Error: "forbidden", Message: "Caller does not own this resource"})
+		return
+	}
+	c.JSON(http.StatusNotFound, gin.H{})
+}
+
 func setupTableHandlers(g *gin.Engine, store persistence.CacheStore, ttls cachettl.Config, authzClient *authz.Client) {
 	ttl := ttls.TTL("tables")
 	viewer := authz.ResolveViewer(authzClient)
@@ -133,9 +148,13 @@ func updateTableName(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "name is required"})
 		return
 	}
-	tbl, err := data.UpdateTableName(c.Request.Context(), c.Param("id"), req.Name)
+	tbl, err := data.UpdateTableName(c.Request.Context(), c.Param("id"), c.Param("user_id"), req.Name)
 	if err != nil {
 		internalError(c, err)
+		return
+	}
+	if tbl == nil {
+		tableWriteFailure(c)
 		return
 	}
 	c.JSON(http.StatusOK, data.TableToVO(tbl, authz.Viewer(c), false, false))
@@ -151,8 +170,13 @@ func updateTableName(c *gin.Context) {
 //	@Failure		500	{object}	interface{}
 //	@Router			/users/{user_id}/tables/{id} [delete]
 func deleteTable(c *gin.Context) {
-	if err := data.DeleteTable(c.Request.Context(), c.Param("id")); err != nil {
+	deleted, err := data.DeleteTable(c.Request.Context(), c.Param("id"), c.Param("user_id"))
+	if err != nil {
 		internalError(c, err)
+		return
+	}
+	if !deleted {
+		tableWriteFailure(c)
 		return
 	}
 	c.Status(http.StatusNoContent)
@@ -177,9 +201,13 @@ func addTableVolume(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
 		return
 	}
-	tbl, err := data.AddTableVolume(c.Request.Context(), c.Param("id"), req.VolumeID)
+	tbl, err := data.AddTableVolume(c.Request.Context(), c.Param("id"), c.Param("user_id"), req.VolumeID)
 	if err != nil {
 		internalError(c, err)
+		return
+	}
+	if tbl == nil {
+		tableWriteFailure(c)
 		return
 	}
 	c.JSON(http.StatusOK, data.TableToVO(tbl, authz.Viewer(c), false, false))
@@ -197,9 +225,13 @@ func addTableVolume(c *gin.Context) {
 //	@Failure		500			{object}	interface{}
 //	@Router			/users/{user_id}/tables/{id}/volumes/{volume_id} [delete]
 func removeTableVolume(c *gin.Context) {
-	tbl, err := data.RemoveTableVolume(c.Request.Context(), c.Param("id"), c.Param("volume_id"))
+	tbl, err := data.RemoveTableVolume(c.Request.Context(), c.Param("id"), c.Param("user_id"), c.Param("volume_id"))
 	if err != nil {
 		internalError(c, err)
+		return
+	}
+	if tbl == nil {
+		tableWriteFailure(c)
 		return
 	}
 	c.JSON(http.StatusOK, data.TableToVO(tbl, authz.Viewer(c), false, false))
@@ -224,9 +256,13 @@ func setTableVisibility(c *gin.Context) {
 	if !ok {
 		return
 	}
-	tbl, err := data.SetTableVisibility(c.Request.Context(), c.Param("id"), v)
+	tbl, err := data.SetTableVisibility(c.Request.Context(), c.Param("id"), c.Param("user_id"), v)
 	if err != nil {
 		internalError(c, err)
+		return
+	}
+	if tbl == nil {
+		tableWriteFailure(c)
 		return
 	}
 	c.JSON(http.StatusOK, data.TableToVO(tbl, authz.Viewer(c), false, false))
