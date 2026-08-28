@@ -19,9 +19,10 @@ require (
 	github.com/swaggo/swag v1.16.6
 	github.com/sweetrpg/api-core.go v0.1.1
 	github.com/sweetrpg/common.go v0.0.16
-	github.com/sweetrpg/game-room-data.go v0.2.0
-	github.com/sweetrpg/game-room-objects.go v0.2.0
+	github.com/sweetrpg/game-room-data.go v0.1.1-0.20260828213415-27a8eb3a364c
+	github.com/sweetrpg/game-room-objects.go v0.1.2-0.20260828212841-ac202886b36a
 	github.com/sweetrpg/mongodb.go v0.0.193
+	go.mongodb.org/mongo-driver v1.17.9
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.70.0
 	golang.org/x/time v0.15.0
 )
@@ -102,7 +103,6 @@ require (
 	github.com/yuin/gopher-lua v1.1.1 // indirect
 	github.com/zerodha/logf v0.5.5 // indirect
 	go.jtlabs.io/query v1.6.1 // indirect
-	go.mongodb.org/mongo-driver v1.17.9 // indirect
 	go.mongodb.org/mongo-driver/v2 v2.8.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel v1.45.0 // indirect

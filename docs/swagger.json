@@ -671,14 +671,15 @@
         },
         "/users/{user_id}/wishlist": {
             "get": {
-                "description": "Get a user's wishlist, or 404 if the caller may not see it.",
+                "description": "Deprecated: use GET /users/{user_id}/wishlists. Returns the caller's first wishlist.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "wishlist"
                 ],
-                "summary": "Get wishlist",
+                "summary": "Get wishlist (deprecated)",
+                "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
@@ -706,6 +707,7 @@
         },
         "/users/{user_id}/wishlist/entries": {
             "post": {
+                "description": "Deprecated: use POST /users/{user_id}/wishlists/{wishlist_id}/entries.",
                 "consumes": [
                     "application/json"
                 ],
@@ -715,7 +717,8 @@
                 "tags": [
                     "wishlist"
                 ],
-                "summary": "Add wishlist entry",
+                "summary": "Add wishlist entry (deprecated)",
+                "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
@@ -752,13 +755,15 @@
         },
         "/users/{user_id}/wishlist/entries/{volume_id}": {
             "delete": {
+                "description": "Deprecated: use DELETE /users/{user_id}/wishlists/{wishlist_id}/entries/{volume_id}.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "wishlist"
                 ],
-                "summary": "Remove wishlist entry",
+                "summary": "Remove wishlist entry (deprecated)",
+                "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
@@ -789,6 +794,7 @@
         },
         "/users/{user_id}/wishlist/visibility": {
             "put": {
+                "description": "Deprecated: use PUT /users/{user_id}/wishlists/{wishlist_id}/visibility.",
                 "consumes": [
                     "application/json"
                 ],
@@ -798,7 +804,8 @@
                 "tags": [
                     "wishlist"
                 ],
-                "summary": "Set wishlist visibility",
+                "summary": "Set wishlist visibility (deprecated)",
+                "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
@@ -832,10 +839,316 @@
                     }
                 }
             }
+        },
+        "/users/{user_id}/wishlists": {
+            "get": {
+                "description": "List a user's wishlists, filtered to what the caller may see.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wishlist"
+                ],
+                "summary": "List wishlists",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new named wishlist, defaulting to private visibility.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wishlist"
+                ],
+                "summary": "Create wishlist",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Wishlist name",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.createWishlistRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {}
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/wishlists/{wishlist_id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wishlist"
+                ],
+                "summary": "Get wishlist",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Wishlist ID",
+                        "name": "wishlist_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "wishlist"
+                ],
+                "summary": "Delete wishlist",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Wishlist ID",
+                        "name": "wishlist_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/wishlists/{wishlist_id}/entries": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wishlist"
+                ],
+                "summary": "Add wishlist entry",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Wishlist ID",
+                        "name": "wishlist_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Volume to add",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.volumeEntryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {}
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/wishlists/{wishlist_id}/entries/{volume_id}": {
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wishlist"
+                ],
+                "summary": "Remove wishlist entry",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Wishlist ID",
+                        "name": "wishlist_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Volume ID",
+                        "name": "volume_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/wishlists/{wishlist_id}/visibility": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wishlist"
+                ],
+                "summary": "Set wishlist visibility",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Wishlist ID",
+                        "name": "wishlist_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New visibility",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.visibilityRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {}
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
         }
     },
     "definitions": {
         "server.createTableRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "server.createWishlistRequest": {
             "type": "object",
             "properties": {
                 "name": {

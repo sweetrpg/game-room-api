@@ -10,41 +10,98 @@ import (
 	"github.com/sweetrpg/game-room-api/authz"
 	"github.com/sweetrpg/game-room-api/cachettl"
 	"github.com/sweetrpg/game-room-data.go/data"
-	"github.com/sweetrpg/game-room-objects.go/models"
 )
+
+type createWishlistRequest struct {
+	Name string `json:"name"`
+}
 
 func setupWishlistHandlers(g *gin.Engine, store persistence.CacheStore, ttls cachettl.Config, authzClient *authz.Client) {
 	ttl := ttls.TTL("wishlist")
 	viewer := authz.ResolveViewer(authzClient)
 	owner := authz.RequireOwner()
 
-	g.GET("/users/:user_id/wishlist", viewer, cache.CachePage(store, ttl, getWishlist))
+	g.GET("/users/:user_id/wishlists", viewer, cache.CachePage(store, ttl, listWishlists))
+	g.GET("/users/:user_id/wishlists/:wishlist_id", viewer, cache.CachePage(store, ttl, getWishlistByID))
+	g.POST("/users/:user_id/wishlists", viewer, owner, createWishlist)
+	g.DELETE("/users/:user_id/wishlists/:wishlist_id", viewer, owner, deleteWishlist)
 
-	g.POST("/users/:user_id/wishlist/entries", viewer, owner, addWishlistEntry)
-	g.DELETE("/users/:user_id/wishlist/entries/:volume_id", viewer, owner, removeWishlistEntry)
-	g.PUT("/users/:user_id/wishlist/visibility", viewer, owner, setWishlistVisibility)
+	g.POST("/users/:user_id/wishlists/:wishlist_id/entries", viewer, owner, addWishlistEntry)
+	g.DELETE("/users/:user_id/wishlists/:wishlist_id/entries/:volume_id", viewer, owner, removeWishlistEntry)
+	g.PUT("/users/:user_id/wishlists/:wishlist_id/visibility", viewer, owner, setWishlistVisibility)
+
+	// Old singular routes: kept responding for this release, proxied to the caller's first
+	// wishlist (creating one if they don't have any yet), per the multi-wishlist-support
+	// migration plan. Remove once the frontend cutover has shipped for a full release cycle.
+	g.GET("/users/:user_id/wishlist", viewer, cache.CachePage(store, ttl, getFirstWishlist))
+	g.POST("/users/:user_id/wishlist/entries", viewer, owner, addFirstWishlistEntry)
+	g.DELETE("/users/:user_id/wishlist/entries/:volume_id", viewer, owner, removeFirstWishlistEntry)
+	g.PUT("/users/:user_id/wishlist/visibility", viewer, owner, setFirstWishlistVisibility)
 }
 
-// Get a user's wishlist.
+// firstWishlistID returns the ID of the user's first wishlist, creating one (named
+// DefaultWishlistName) if they don't have any yet.
+func firstWishlistID(c *gin.Context, userID string) (string, error) {
+	wls, err := data.ListWishlistsByUser(c.Request.Context(), userID)
+	if err != nil {
+		return "", err
+	}
+	if len(wls) > 0 {
+		return wls[0].ID, nil
+	}
+	wl, err := data.CreateWishlist(c.Request.Context(), userID, data.DefaultWishlistName)
+	if err != nil {
+		return "", err
+	}
+	return wl.ID, nil
+}
+
+// List a user's wishlists.
 //
-//	@Summary		Get wishlist
-//	@Description	Get a user's wishlist, or 404 if the caller may not see it.
+//	@Summary		List wishlists
+//	@Description	List a user's wishlists, filtered to what the caller may see.
 //	@Tags			wishlist
 //	@Produce		json
 //	@Param			user_id	path		string	true	"User ID"
 //	@Success		200		{object}	interface{}
-//	@Failure		404		{object}	interface{}
 //	@Failure		500		{object}	interface{}
-//	@Router			/users/{user_id}/wishlist [get]
-func getWishlist(c *gin.Context) {
-	userID := c.Param("user_id")
-	wl, err := data.GetWishlistByUser(c.Request.Context(), userID)
+//	@Router			/users/{user_id}/wishlists [get]
+func listWishlists(c *gin.Context) {
+	wls, err := data.ListWishlistsByUser(c.Request.Context(), c.Param("user_id"))
+	if err != nil {
+		internalError(c, err)
+		return
+	}
+	viewer := authz.Viewer(c)
+	vos := make([]interface{}, 0, len(wls))
+	for _, wl := range wls {
+		if v := data.WishlistToVO(wl, viewer, false, false); v != nil {
+			vos = append(vos, v)
+		}
+	}
+	c.JSON(http.StatusOK, vos)
+}
+
+// Get one wishlist.
+//
+//	@Summary		Get wishlist
+//	@Tags			wishlist
+//	@Produce		json
+//	@Param			user_id			path		string	true	"User ID"
+//	@Param			wishlist_id		path		string	true	"Wishlist ID"
+//	@Success		200				{object}	interface{}
+//	@Failure		404				{object}	interface{}
+//	@Failure		500				{object}	interface{}
+//	@Router			/users/{user_id}/wishlists/{wishlist_id} [get]
+func getWishlistByID(c *gin.Context) {
+	wl, err := data.GetWishlist(c.Request.Context(), c.Param("wishlist_id"))
 	if err != nil {
 		internalError(c, err)
 		return
 	}
 	if wl == nil {
-		wl = &models.Wishlist{UserID: userID, Visibility: models.VisibilityPrivate}
+		c.JSON(http.StatusNotFound, gin.H{})
+		return
 	}
 	vo := data.WishlistToVO(wl, authz.Viewer(c), false, false)
 	if vo == nil {
@@ -54,25 +111,70 @@ func getWishlist(c *gin.Context) {
 	c.JSON(http.StatusOK, vo)
 }
 
+// Create a wishlist.
+//
+//	@Summary		Create wishlist
+//	@Description	Create a new named wishlist, defaulting to private visibility.
+//	@Tags			wishlist
+//	@Accept			json
+//	@Produce		json
+//	@Param			user_id	path		string					true	"User ID"
+//	@Param			body	body		createWishlistRequest	true	"Wishlist name"
+//	@Success		200		{object}	interface{}
+//	@Failure		400		{object}	interface{}
+//	@Failure		500		{object}	interface{}
+//	@Router			/users/{user_id}/wishlists [post]
+func createWishlist(c *gin.Context) {
+	var req createWishlistRequest
+	if err := c.ShouldBindJSON(&req); err != nil || req.Name == "" {
+		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "name is required"})
+		return
+	}
+	wl, err := data.CreateWishlist(c.Request.Context(), c.Param("user_id"), req.Name)
+	if err != nil {
+		internalError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, data.WishlistToVO(wl, authz.Viewer(c), false, false))
+}
+
+// Delete a wishlist.
+//
+//	@Summary		Delete wishlist
+//	@Tags			wishlist
+//	@Param			user_id			path	string	true	"User ID"
+//	@Param			wishlist_id		path	string	true	"Wishlist ID"
+//	@Success		204
+//	@Failure		500	{object}	interface{}
+//	@Router			/users/{user_id}/wishlists/{wishlist_id} [delete]
+func deleteWishlist(c *gin.Context) {
+	if err := data.DeleteWishlist(c.Request.Context(), c.Param("wishlist_id")); err != nil {
+		internalError(c, err)
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
 // Add a wishlist entry.
 //
 //	@Summary		Add wishlist entry
 //	@Tags			wishlist
 //	@Accept			json
 //	@Produce		json
-//	@Param			user_id	path		string				true	"User ID"
-//	@Param			body	body		volumeEntryRequest	true	"Volume to add"
-//	@Success		200		{object}	interface{}
-//	@Failure		400		{object}	interface{}
-//	@Failure		500		{object}	interface{}
-//	@Router			/users/{user_id}/wishlist/entries [post]
+//	@Param			user_id			path		string				true	"User ID"
+//	@Param			wishlist_id		path		string				true	"Wishlist ID"
+//	@Param			body			body		volumeEntryRequest	true	"Volume to add"
+//	@Success		200				{object}	interface{}
+//	@Failure		400				{object}	interface{}
+//	@Failure		500				{object}	interface{}
+//	@Router			/users/{user_id}/wishlists/{wishlist_id}/entries [post]
 func addWishlistEntry(c *gin.Context) {
 	var req volumeEntryRequest
 	if err := c.ShouldBindJSON(&req); err != nil || req.VolumeID == "" {
 		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
 		return
 	}
-	wl, err := data.AddWishlistEntry(c.Request.Context(), c.Param("user_id"), req.VolumeID)
+	wl, err := data.AddWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), req.VolumeID)
 	if err != nil {
 		internalError(c, err)
 		return
@@ -85,13 +187,14 @@ func addWishlistEntry(c *gin.Context) {
 //	@Summary		Remove wishlist entry
 //	@Tags			wishlist
 //	@Produce		json
-//	@Param			user_id		path		string	true	"User ID"
-//	@Param			volume_id	path		string	true	"Volume ID"
-//	@Success		200			{object}	interface{}
-//	@Failure		500			{object}	interface{}
-//	@Router			/users/{user_id}/wishlist/entries/{volume_id} [delete]
+//	@Param			user_id			path		string	true	"User ID"
+//	@Param			wishlist_id		path		string	true	"Wishlist ID"
+//	@Param			volume_id		path		string	true	"Volume ID"
+//	@Success		200				{object}	interface{}
+//	@Failure		500				{object}	interface{}
+//	@Router			/users/{user_id}/wishlists/{wishlist_id}/entries/{volume_id} [delete]
 func removeWishlistEntry(c *gin.Context) {
-	wl, err := data.RemoveWishlistEntry(c.Request.Context(), c.Param("user_id"), c.Param("volume_id"))
+	wl, err := data.RemoveWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), c.Param("volume_id"))
 	if err != nil {
 		internalError(c, err)
 		return
@@ -105,22 +208,118 @@ func removeWishlistEntry(c *gin.Context) {
 //	@Tags			wishlist
 //	@Accept			json
 //	@Produce		json
-//	@Param			user_id	path		string				true	"User ID"
-//	@Param			body	body		visibilityRequest	true	"New visibility"
-//	@Success		200		{object}	interface{}
-//	@Failure		400		{object}	interface{}
-//	@Failure		500		{object}	interface{}
-//	@Router			/users/{user_id}/wishlist/visibility [put]
+//	@Param			user_id			path		string				true	"User ID"
+//	@Param			wishlist_id		path		string				true	"Wishlist ID"
+//	@Param			body			body		visibilityRequest	true	"New visibility"
+//	@Success		200				{object}	interface{}
+//	@Failure		400				{object}	interface{}
+//	@Failure		500				{object}	interface{}
+//	@Router			/users/{user_id}/wishlists/{wishlist_id}/visibility [put]
 func setWishlistVisibility(c *gin.Context) {
 	var req visibilityRequest
 	v, ok := bindVisibility(c, &req)
 	if !ok {
 		return
 	}
-	wl, err := data.SetWishlistVisibility(c.Request.Context(), c.Param("user_id"), v)
+	wl, err := data.SetWishlistVisibility(c.Request.Context(), c.Param("wishlist_id"), v)
 	if err != nil {
 		internalError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, data.WishlistToVO(wl, authz.Viewer(c), false, false))
+}
+
+// getFirstWishlist serves the deprecated singular GET route from the caller's first wishlist.
+//
+//	@Summary		Get wishlist (deprecated)
+//	@Description	Deprecated: use GET /users/{user_id}/wishlists. Returns the caller's first wishlist.
+//	@Tags			wishlist
+//	@Produce		json
+//	@Param			user_id	path		string	true	"User ID"
+//	@Success		200		{object}	interface{}
+//	@Failure		404		{object}	interface{}
+//	@Failure		500		{object}	interface{}
+//	@Router			/users/{user_id}/wishlist [get]
+//	@Deprecated
+func getFirstWishlist(c *gin.Context) {
+	id, err := firstWishlistID(c, c.Param("user_id"))
+	if err != nil {
+		internalError(c, err)
+		return
+	}
+	c.Params = append(c.Params, gin.Param{Key: "wishlist_id", Value: id})
+	getWishlistByID(c)
+}
+
+// addFirstWishlistEntry serves the deprecated singular add-entry route against the caller's
+// first wishlist.
+//
+//	@Summary		Add wishlist entry (deprecated)
+//	@Description	Deprecated: use POST /users/{user_id}/wishlists/{wishlist_id}/entries.
+//	@Tags			wishlist
+//	@Accept			json
+//	@Produce		json
+//	@Param			user_id	path		string				true	"User ID"
+//	@Param			body	body		volumeEntryRequest	true	"Volume to add"
+//	@Success		200		{object}	interface{}
+//	@Failure		400		{object}	interface{}
+//	@Failure		500		{object}	interface{}
+//	@Router			/users/{user_id}/wishlist/entries [post]
+//	@Deprecated
+func addFirstWishlistEntry(c *gin.Context) {
+	id, err := firstWishlistID(c, c.Param("user_id"))
+	if err != nil {
+		internalError(c, err)
+		return
+	}
+	c.Params = append(c.Params, gin.Param{Key: "wishlist_id", Value: id})
+	addWishlistEntry(c)
+}
+
+// removeFirstWishlistEntry serves the deprecated singular remove-entry route against the
+// caller's first wishlist.
+//
+//	@Summary		Remove wishlist entry (deprecated)
+//	@Description	Deprecated: use DELETE /users/{user_id}/wishlists/{wishlist_id}/entries/{volume_id}.
+//	@Tags			wishlist
+//	@Produce		json
+//	@Param			user_id		path		string	true	"User ID"
+//	@Param			volume_id	path		string	true	"Volume ID"
+//	@Success		200			{object}	interface{}
+//	@Failure		500			{object}	interface{}
+//	@Router			/users/{user_id}/wishlist/entries/{volume_id} [delete]
+//	@Deprecated
+func removeFirstWishlistEntry(c *gin.Context) {
+	id, err := firstWishlistID(c, c.Param("user_id"))
+	if err != nil {
+		internalError(c, err)
+		return
+	}
+	c.Params = append(c.Params, gin.Param{Key: "wishlist_id", Value: id})
+	removeWishlistEntry(c)
+}
+
+// setFirstWishlistVisibility serves the deprecated singular visibility route against the
+// caller's first wishlist.
+//
+//	@Summary		Set wishlist visibility (deprecated)
+//	@Description	Deprecated: use PUT /users/{user_id}/wishlists/{wishlist_id}/visibility.
+//	@Tags			wishlist
+//	@Accept			json
+//	@Produce		json
+//	@Param			user_id	path		string				true	"User ID"
+//	@Param			body	body		visibilityRequest	true	"New visibility"
+//	@Success		200		{object}	interface{}
+//	@Failure		400		{object}	interface{}
+//	@Failure		500		{object}	interface{}
+//	@Router			/users/{user_id}/wishlist/visibility [put]
+//	@Deprecated
+func setFirstWishlistVisibility(c *gin.Context) {
+	id, err := firstWishlistID(c, c.Param("user_id"))
+	if err != nil {
+		internalError(c, err)
+		return
+	}
+	c.Params = append(c.Params, gin.Param{Key: "wishlist_id", Value: id})
+	setWishlistVisibility(c)
 }
