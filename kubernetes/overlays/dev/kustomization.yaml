@@ -13,11 +13,13 @@ resources:
 
 labels:
     - pairs:
-          app: api
-          version: v1
-          platform: sweetrpg
-          package: game-room
-          component: api
+          app.kubernetes.io/name: game-room-api
+          app.kubernetes.io/version: v1
+          app.kubernetes.io/component: api
+          app.kubernetes.io/part-of: game-room
+          com.sweetrpg/env: dev
+      includeSelectors: false
+      includeTemplates: true
 
 generatorOptions:
     disableNameSuffixHash: true
