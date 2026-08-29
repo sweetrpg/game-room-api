@@ -1,4 +1,16 @@
 
+## 0.2.0 - 2026-08-29
+
+### Added
+- Add multi-wishlist routes, keep old singular routes proxied
+
+
+### Fixed
+- Scope write queries to the resource owner
+- Skip DB-backed request tests when TEST_DB_URI is unset
+
+
+
 ## 0.1.2 - 2026-08-29
 
 ### Fixed

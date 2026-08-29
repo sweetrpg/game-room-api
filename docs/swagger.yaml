@@ -4,6 +4,11 @@ definitions:
       name:
         type: string
     type: object
+  server.createWishlistRequest:
+    properties:
+      name:
+        type: string
+    type: object
   server.previewResponse:
     properties:
       affected_volume_ids:
@@ -506,7 +511,9 @@ paths:
       - tables
   /users/{user_id}/wishlist:
     get:
-      description: Get a user's wishlist, or 404 if the caller may not see it.
+      deprecated: true
+      description: 'Deprecated: use GET /users/{user_id}/wishlists. Returns the caller''s
+        first wishlist.'
       parameters:
       - description: User ID
         in: path
@@ -525,13 +532,15 @@ paths:
         "500":
           description: Internal Server Error
           schema: {}
-      summary: Get wishlist
+      summary: Get wishlist (deprecated)
       tags:
       - wishlist
   /users/{user_id}/wishlist/entries:
     post:
       consumes:
       - application/json
+      deprecated: true
+      description: 'Deprecated: use POST /users/{user_id}/wishlists/{wishlist_id}/entries.'
       parameters:
       - description: User ID
         in: path
@@ -556,11 +565,13 @@ paths:
         "500":
           description: Internal Server Error
           schema: {}
-      summary: Add wishlist entry
+      summary: Add wishlist entry (deprecated)
       tags:
       - wishlist
   /users/{user_id}/wishlist/entries/{volume_id}:
     delete:
+      deprecated: true
+      description: 'Deprecated: use DELETE /users/{user_id}/wishlists/{wishlist_id}/entries/{volume_id}.'
       parameters:
       - description: User ID
         in: path
@@ -581,10 +592,210 @@ paths:
         "500":
           description: Internal Server Error
           schema: {}
-      summary: Remove wishlist entry
+      summary: Remove wishlist entry (deprecated)
       tags:
       - wishlist
   /users/{user_id}/wishlist/visibility:
+    put:
+      consumes:
+      - application/json
+      deprecated: true
+      description: 'Deprecated: use PUT /users/{user_id}/wishlists/{wishlist_id}/visibility.'
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: New visibility
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/server.visibilityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Set wishlist visibility (deprecated)
+      tags:
+      - wishlist
+  /users/{user_id}/wishlists:
+    get:
+      description: List a user's wishlists, filtered to what the caller may see.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: List wishlists
+      tags:
+      - wishlist
+    post:
+      consumes:
+      - application/json
+      description: Create a new named wishlist, defaulting to private visibility.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Wishlist name
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/server.createWishlistRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Create wishlist
+      tags:
+      - wishlist
+  /users/{user_id}/wishlists/{wishlist_id}:
+    delete:
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Wishlist ID
+        in: path
+        name: wishlist_id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Delete wishlist
+      tags:
+      - wishlist
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Wishlist ID
+        in: path
+        name: wishlist_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Get wishlist
+      tags:
+      - wishlist
+  /users/{user_id}/wishlists/{wishlist_id}/entries:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Wishlist ID
+        in: path
+        name: wishlist_id
+        required: true
+        type: string
+      - description: Volume to add
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/server.volumeEntryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Add wishlist entry
+      tags:
+      - wishlist
+  /users/{user_id}/wishlists/{wishlist_id}/entries/{volume_id}:
+    delete:
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Wishlist ID
+        in: path
+        name: wishlist_id
+        required: true
+        type: string
+      - description: Volume ID
+        in: path
+        name: volume_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Remove wishlist entry
+      tags:
+      - wishlist
+  /users/{user_id}/wishlists/{wishlist_id}/visibility:
     put:
       consumes:
       - application/json
@@ -592,6 +803,11 @@ paths:
       - description: User ID
         in: path
         name: user_id
+        required: true
+        type: string
+      - description: Wishlist ID
+        in: path
+        name: wishlist_id
         required: true
         type: string
       - description: New visibility
