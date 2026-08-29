@@ -18,7 +18,11 @@ import (
 
 func setupTestDB(t *testing.T) {
 	t.Helper()
-	_ = os.Setenv(constants.DB_URI, os.Getenv("TEST_DB_URI"))
+	uri := os.Getenv("TEST_DB_URI")
+	if uri == "" {
+		t.Skip("TEST_DB_URI not set - this repo's CI has no Mongo service container yet, skip DB-backed tests")
+	}
+	_ = os.Setenv(constants.DB_URI, uri)
 	logging.Init()
 	database.SetupDatabase()
 }
