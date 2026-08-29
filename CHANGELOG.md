@@ -5,6 +5,8 @@
 - Enforce ownership on table write endpoints
 
 
+## 0.1.1 - 2026-08-28
+
 
 ## 0.1.1 - 2026-08-25
 
