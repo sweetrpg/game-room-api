@@ -61,7 +61,7 @@ func TestUpdateLibraryEntryTitleMissingBody(t *testing.T) {
 	setupTestDB(t)
 	userID := primitive.NewObjectID().Hex()
 
-	c, w := newTestContext(t, http.MethodPut, "/users/"+userID+"/library/entries/vol-1/title", gin.Params{}, userID)
+	c, w := newTestContext(t, http.MethodPut, "/users/"+userID+"/library/entries/vol-1/title", nil, gin.Params{}, userID)
 	updateLibraryEntryTitle(c)
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("status = %d, want 400", w.Code)
