@@ -19,8 +19,8 @@ require (
 	github.com/swaggo/swag v1.16.6
 	github.com/sweetrpg/api-core.go v0.1.1
 	github.com/sweetrpg/common.go v0.0.16
-	github.com/sweetrpg/game-room-data.go v0.1.1-0.20260828232217-9e75daad40b2
-	github.com/sweetrpg/game-room-objects.go v0.1.2-0.20260828212841-ac202886b36a
+	github.com/sweetrpg/game-room-data.go v0.4.0
+	github.com/sweetrpg/game-room-objects.go v0.2.2
 	github.com/sweetrpg/mongodb.go v0.0.193
 	go.mongodb.org/mongo-driver v1.17.9
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.70.0
