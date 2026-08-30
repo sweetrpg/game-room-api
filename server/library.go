@@ -69,7 +69,7 @@ func addLibraryEntry(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
 		return
 	}
-	lib, err := data.AddLibraryEntry(c.Request.Context(), c.Param("user_id"), req.VolumeID)
+	lib, err := data.AddLibraryEntry(c.Request.Context(), c.Param("user_id"), req.VolumeID, req.VolumeTitle)
 	if err != nil {
 		internalError(c, err)
 		return
