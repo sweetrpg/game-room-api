@@ -2122,12 +2122,20 @@ import (
         "github.com/sweetrpg/game-room-objects.go/models"
 )
 
+// volumeEntryRequest is shared by the library, wishlist, and table add-entry endpoints. The
+// library endpoint also captures volume_title as a denormalized snapshot for display; the others
+// ignore it.
 type volumeEntryRequest struct {
-        VolumeID string `json:"volume_id"`
+        VolumeID    string `json:"volume_id"`
+        VolumeTitle string `json:"volume_title"`
 }
 
 type visibilityRequest struct {
         Visibility string `json:"visibility"`
+}
+
+type titleRequest struct {
+        Title string `json:"title"`
 }
 
 type previewResponse struct {
@@ -2187,6 +2195,7 @@ func SetupHandlers(g *gin.Engine, cache persistence.CacheStore, ttls cachettl.Co
 		<pre class="file" id="file9" style="display: none">package server
 
 import (
+        "errors"
         "net/http"
 
         "github.com/gin-contrib/cache"
@@ -2209,6 +2218,7 @@ func setupLibraryHandlers(g *gin.Engine, store persistence.CacheStore, ttls cach
         g.POST("/users/:user_id/library/entries", viewer, owner, addLibraryEntry)
         g.DELETE("/users/:user_id/library/entries/:volume_id", viewer, owner, removeLibraryEntry)
         g.PUT("/users/:user_id/library/entries/:volume_id/visibility", viewer, owner, setLibraryEntryVisibility)
+        g.PUT("/users/:user_id/library/entries/:volume_id/title", viewer, owner, updateLibraryEntryTitle)
         g.PUT("/users/:user_id/library/default-visibility", viewer, owner, setLibraryDefaultVisibility)
         g.POST("/users/:user_id/library/default-visibility/preview", viewer, owner, previewLibraryDefaultVisibility)
 }</span>
@@ -2255,7 +2265,7 @@ func addLibraryEntry(c *gin.Context) <span class="cov0" title="0">{
                 c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
                 return
         }</span>
-        <span class="cov0" title="0">lib, err := data.AddLibraryEntry(c.Request.Context(), c.Param("user_id"), req.VolumeID)
+        <span class="cov0" title="0">lib, err := data.AddLibraryEntry(c.Request.Context(), c.Param("user_id"), req.VolumeID, req.VolumeTitle)
         if err != nil </span><span class="cov0" title="0">{
                 internalError(c, err)
                 return
@@ -2321,9 +2331,43 @@ func setLibraryEntryVisibility(c *gin.Context) <span class="cov0" title="0">{
         <span class="cov0" title="0">c.JSON(http.StatusOK, data.LibraryToVO(lib, authz.Viewer(c), false, false))</span>
 }
 
+// Update a library entry's display title.
+//
+//        @Summary                Update library entry title
+//        @Description        Refresh the denormalized title snapshot on a single library entry.
+//        @Tags                        library
+//        @Accept                        json
+//        @Produce                json
+//        @Param                        user_id                path        string                        true        "User ID"
+//        @Param                        volume_id        path        string                        true        "Volume ID"
+//        @Param                        body                body        titleRequest        true        "New title"
+//        @Success                200                        {object}        interface{}
+//        @Failure                400                        {object}        interface{}
+//        @Failure                404                        {object}        interface{}
+//        @Failure                500                        {object}        interface{}
+//        @Router                        /users/{user_id}/library/entries/{volume_id}/title [put]
+func updateLibraryEntryTitle(c *gin.Context) <span class="cov0" title="0">{
+        var req titleRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil || req.Title == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "title is required"})
+                return
+        }</span>
+        <span class="cov0" title="0">lib, err := data.UpdateLibraryEntryTitle(c.Request.Context(), c.Param("user_id"), c.Param("volume_id"), req.Title)
+        if err != nil </span><span class="cov0" title="0">{
+                if errors.Is(err, data.ErrLibraryEntryNotFound) </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusNotFound, gin.H{})
+                        return
+                }</span>
+                <span class="cov0" title="0">internalError(c, err)
+                return</span>
+        }
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.LibraryToVO(lib, authz.Viewer(c), false, false))</span>
+}
+
 // Set the library's default visibility.
 //
 //        @Summary                Set library default visibility
+//
 //        @Tags                        library
 //        @Accept                        json
 //        @Produce                json
