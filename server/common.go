@@ -21,6 +21,10 @@ type visibilityRequest struct {
 	Visibility string `json:"visibility"`
 }
 
+type titleRequest struct {
+	Title string `json:"title"`
+}
+
 type previewResponse struct {
 	AffectedVolumeIDs []string `json:"affected_volume_ids"`
 }
