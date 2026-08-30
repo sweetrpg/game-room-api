@@ -1,4 +1,12 @@
 
+## 0.3.0 - 2026-08-30
+
+### Added
+- Add VolumeTitle to addLibraryEntry request
+- Add PUT entry title route; bump data to v0.4.0, objects to v0.2.2
+
+
+
 ## 0.2.0 - 2026-08-29
 
 ### Added
