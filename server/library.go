@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-contrib/cache"
@@ -23,6 +24,7 @@ func setupLibraryHandlers(g *gin.Engine, store persistence.CacheStore, ttls cach
 	g.POST("/users/:user_id/library/entries", viewer, owner, addLibraryEntry)
 	g.DELETE("/users/:user_id/library/entries/:volume_id", viewer, owner, removeLibraryEntry)
 	g.PUT("/users/:user_id/library/entries/:volume_id/visibility", viewer, owner, setLibraryEntryVisibility)
+	g.PUT("/users/:user_id/library/entries/:volume_id/title", viewer, owner, updateLibraryEntryTitle)
 	g.PUT("/users/:user_id/library/default-visibility", viewer, owner, setLibraryDefaultVisibility)
 	g.POST("/users/:user_id/library/default-visibility/preview", viewer, owner, previewLibraryDefaultVisibility)
 }
@@ -69,7 +71,7 @@ func addLibraryEntry(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
 		return
 	}
-	lib, err := data.AddLibraryEntry(c.Request.Context(), c.Param("user_id"), req.VolumeID)
+	lib, err := data.AddLibraryEntry(c.Request.Context(), c.Param("user_id"), req.VolumeID, req.VolumeTitle)
 	if err != nil {
 		internalError(c, err)
 		return
@@ -135,9 +137,43 @@ func setLibraryEntryVisibility(c *gin.Context) {
 	c.JSON(http.StatusOK, data.LibraryToVO(lib, authz.Viewer(c), false, false))
 }
 
+// Update a library entry's display title.
+//
+//	@Summary		Update library entry title
+//	@Description	Refresh the denormalized title snapshot on a single library entry.
+//	@Tags			library
+//	@Accept			json
+//	@Produce		json
+//	@Param			user_id		path	string			true	"User ID"
+//	@Param			volume_id	path	string			true	"Volume ID"
+//	@Param			body		body	titleRequest	true	"New title"
+//	@Success		200			{object}	interface{}
+//	@Failure		400			{object}	interface{}
+//	@Failure		404			{object}	interface{}
+//	@Failure		500			{object}	interface{}
+//	@Router			/users/{user_id}/library/entries/{volume_id}/title [put]
+func updateLibraryEntryTitle(c *gin.Context) {
+	var req titleRequest
+	if err := c.ShouldBindJSON(&req); err != nil || req.Title == "" {
+		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "title is required"})
+		return
+	}
+	lib, err := data.UpdateLibraryEntryTitle(c.Request.Context(), c.Param("user_id"), c.Param("volume_id"), req.Title)
+	if err != nil {
+		if errors.Is(err, data.ErrLibraryEntryNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{})
+			return
+		}
+		internalError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, data.LibraryToVO(lib, authz.Viewer(c), false, false))
+}
+
 // Set the library's default visibility.
 //
 //	@Summary		Set library default visibility
+//
 //	@Tags			library
 //	@Accept			json
 //	@Produce		json

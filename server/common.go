@@ -9,12 +9,20 @@ import (
 	"github.com/sweetrpg/game-room-objects.go/models"
 )
 
+// volumeEntryRequest is shared by the library, wishlist, and table add-entry endpoints. The
+// library endpoint also captures volume_title as a denormalized snapshot for display; the others
+// ignore it.
 type volumeEntryRequest struct {
-	VolumeID string `json:"volume_id"`
+	VolumeID    string `json:"volume_id"`
+	VolumeTitle string `json:"volume_title"`
 }
 
 type visibilityRequest struct {
 	Visibility string `json:"visibility"`
+}
+
+type titleRequest struct {
+	Title string `json:"title"`
 }
 
 type previewResponse struct {
