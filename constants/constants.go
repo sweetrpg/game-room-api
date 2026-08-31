@@ -23,6 +23,10 @@ const (
 	// AUTH_API_URL points at auth-api's base URL, used to verify bearer tokens and resolve
 	// the caller's subject (user ID) via POST /authz/check.
 	AUTH_API_URL = "AUTH_API_URL"
+
+	// USERS_API_URL points at users-api's base URL, used to resolve a verified subject to its
+	// canonical users._id user ID via GET /api/profile.
+	USERS_API_URL = "USERS_API_URL"
 )
 
 // Value constants

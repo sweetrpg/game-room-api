@@ -12,9 +12,14 @@ const viewerContextKey = "authz.viewer"
 
 // ResolveViewer returns Gin middleware that resolves the caller's identity from a bearer token,
 // when present, and stashes it in the Gin context (read via Viewer(c)) for handlers to use in
-// visibility filtering and ownership checks. A missing token, or one auth-api rejects, resolves
-// to an anonymous viewer ("") rather than aborting the request - reads must stay accessible to
-// anonymous callers for anything public.
+// visibility filtering and ownership checks. A missing token, one auth-api rejects, or a subject
+// with no provisioned user profile resolves to an anonymous viewer ("") rather than aborting the
+// request - reads must stay accessible to anonymous callers for anything public.
+//
+// The viewer identity stored in the context is the caller's canonical users._id user ID (the
+// value of user_id throughout Game Room after the migrate-game-room-user-ids cutover), not the
+// raw third-party subject. Resolving it requires a users-api round trip for authenticated
+// callers; an unresolvable subject yields "" so owner-scoped writes are rejected.
 func ResolveViewer(client *Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := bearerToken(c)
@@ -32,12 +37,16 @@ func ResolveViewer(client *Client) gin.HandlerFunc {
 			return
 		}
 
-		c.Set(viewerContextKey, result.Sub)
+		userID := client.ResolveUserID(c.Request.Context(), token)
+		if userID == "" {
+			logging.Logger.Debug("subject has no provisioned user, treating caller as anonymous", "sub", result.Sub)
+		}
+		c.Set(viewerContextKey, userID)
 		c.Next()
 	}
 }
 
-// Viewer returns the caller's resolved subject, or "" for an anonymous viewer.
+// Viewer returns the caller's canonical users._id user ID, or "" for an anonymous viewer.
 func Viewer(c *gin.Context) string {
 	if v, ok := c.Get(viewerContextKey); ok {
 		if sub, ok := v.(string); ok {
