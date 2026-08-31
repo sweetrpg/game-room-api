@@ -8,7 +8,33 @@ on:
   workflow_dispatch:
 
 jobs:
+  migrate-wishlist-names:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DB_URI: ${{ secrets.STAGING_DB_URI }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Backfill wishlist names
+        if: ${{ env.DB_URI != '' }}
+        run: go run ./cmd/migrate-wishlist-names
+
+      - name: Note skipped migration
+        if: ${{ env.DB_URI == '' }}
+        run: echo "STAGING_DB_URI not configured; wishlist name migration skipped. Set the secret before the single-wishlist routes are removed."
+
   prepare:
+    needs: migrate-wishlist-names
     uses: sweetrpg/github-actions/.github/workflows/go-prepare-release.yaml@master
     with:
       project-number: 8
