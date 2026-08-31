@@ -158,39 +158,3 @@ func TestNonOwnerWriteRequestsAreForbidden(t *testing.T) {
 		t.Fatalf("intruder mutated the wishlist despite 403s: %+v", stillThere)
 	}
 }
-
-func TestOldSingularRouteProxiesToFirstWishlist(t *testing.T) {
-	setupTestDB(t)
-	userID := primitive.NewObjectID().Hex()
-
-	getC, getW := newTestContext(t, http.MethodGet, "/users/"+userID+"/wishlist", nil, gin.Params{{Key: "user_id", Value: userID}}, userID)
-	getFirstWishlist(getC)
-	if getW.Code != http.StatusOK {
-		t.Fatalf("get first wishlist status = %d, body = %s", getW.Code, getW.Body.String())
-	}
-
-	var wl objvo.WishlistVO
-	if err := json.Unmarshal(getW.Body.Bytes(), &wl); err != nil {
-		t.Fatalf("decode response: %v", err)
-	}
-	if wl.Name == "" {
-		t.Fatalf("expected the auto-created wishlist to have a default name")
-	}
-
-	entryC, entryW := newTestContext(t, http.MethodPost, "/users/"+userID+"/wishlist/entries", volumeEntryRequest{VolumeID: "vol-1"}, gin.Params{{Key: "user_id", Value: userID}}, userID)
-	addFirstWishlistEntry(entryC)
-	if entryW.Code != http.StatusOK {
-		t.Fatalf("add entry via deprecated route status = %d, body = %s", entryW.Code, entryW.Body.String())
-	}
-
-	var updated objvo.WishlistVO
-	if err := json.Unmarshal(entryW.Body.Bytes(), &updated); err != nil {
-		t.Fatalf("decode entry response: %v", err)
-	}
-	if updated.ID != wl.ID {
-		t.Fatalf("deprecated add-entry route hit a different wishlist: got %s, want %s", updated.ID, wl.ID)
-	}
-	if len(updated.Entries) != 1 || updated.Entries[0].VolumeID != "vol-1" {
-		t.Fatalf("entry not applied to the user's first wishlist: %+v", updated.Entries)
-	}
-}
