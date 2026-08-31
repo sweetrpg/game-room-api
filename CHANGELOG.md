@@ -1,4 +1,11 @@
 
+## 0.6.0 - 2026-08-31
+
+### Added
+- Remove deprecated singular wishlist routes and handlers
+
+
+
 ## 0.5.0 - 2026-08-31
 
 ### Added
