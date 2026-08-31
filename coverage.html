@@ -136,18 +136,65 @@ type InvalidTokenError struct{}
 
 func (InvalidTokenError) Error() string <span class="cov0" title="0">{ return "authz: invalid or missing token" }</span>
 
-// Client calls auth-api's /authz/check endpoint.
+// Client calls auth-api's /authz/check endpoint and users-api's /api/profile endpoint.
 type Client struct {
-        baseURL string
-        http    *http.Client
+        baseURL      string
+        usersBaseURL string
+        http         *http.Client
 }
 
-// NewClient builds a Client against auth-api's base URL. An empty baseURL is accepted so the
-// service can still start when AUTH_API_URL isn't configured - every Check call then fails,
+// NewClient builds a Client against auth-api's base URL and users-api's base URL. authBaseURL
+// drives identity verification (the subject); usersBaseURL resolves that subject to the
+// canonical users._id user ID. Either may be empty so the service can still start when the
+// corresponding URL env var isn't configured - a missing URL makes the relevant call fail,
 // which ResolveViewer treats as anonymous.
-func NewClient(baseURL string) *Client <span class="cov0" title="0">{
-        return &amp;Client{baseURL: baseURL, http: &amp;http.Client{Timeout: 5 * time.Second}}
+func NewClient(authBaseURL, usersBaseURL string) *Client <span class="cov0" title="0">{
+        return &amp;Client{baseURL: authBaseURL, usersBaseURL: usersBaseURL, http: &amp;http.Client{Timeout: 5 * time.Second}}
 }</span>
+
+// profileResponse is the slice of users-api's /api/profile response game-room-api reads.
+type profileResponse struct {
+        UserID string `json:"user_id"`
+}
+
+// ResolveUserID exchanges a verified bearer token for the caller's canonical users._id user ID
+// by calling users-api's /api/profile. It returns "" when the token is missing, the user has no
+// provisioned profile (HTTP 404), or users-api is unavailable - all of which ResolveViewer
+// treats as an unprovisioned/anonymous viewer.
+func (c *Client) ResolveUserID(ctx context.Context, token string) string <span class="cov0" title="0">{
+        if c.usersBaseURL == "" || token == "" </span><span class="cov0" title="0">{
+                return ""
+        }</span>
+
+        <span class="cov0" title="0">req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.usersBaseURL+"/api/profile", nil)
+        if err != nil </span><span class="cov0" title="0">{
+                logging.Logger.Debug("users-api resolve: build request", "error", err.Error())
+                return ""
+        }</span>
+        <span class="cov0" title="0">req.Header.Set("Authorization", "Bearer "+token)
+
+        resp, err := c.http.Do(req)
+        if err != nil </span><span class="cov0" title="0">{
+                logging.Logger.Debug("users-api resolve: request failed", "error", err.Error())
+                return ""
+        }</span>
+        <span class="cov0" title="0">defer func() </span><span class="cov0" title="0">{ _ = resp.Body.Close() }</span>()
+
+        <span class="cov0" title="0">if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusUnauthorized </span><span class="cov0" title="0">{
+                return ""
+        }</span>
+        <span class="cov0" title="0">if resp.StatusCode != http.StatusOK </span><span class="cov0" title="0">{
+                logging.Logger.Debug("users-api resolve: unexpected status", "status", resp.StatusCode)
+                return ""
+        }</span>
+
+        <span class="cov0" title="0">var out profileResponse
+        if err := json.NewDecoder(resp.Body).Decode(&amp;out); err != nil </span><span class="cov0" title="0">{
+                logging.Logger.Debug("users-api resolve: decode response", "error", err.Error())
+                return ""
+        }</span>
+        <span class="cov0" title="0">return out.UserID</span>
+}
 
 // Check verifies token against auth-api and returns the caller's allowed/roles/subject.
 func (c *Client) Check(ctx context.Context, token, service string) (*CheckResponse, error) <span class="cov0" title="0">{
@@ -200,9 +247,14 @@ const viewerContextKey = "authz.viewer"
 
 // ResolveViewer returns Gin middleware that resolves the caller's identity from a bearer token,
 // when present, and stashes it in the Gin context (read via Viewer(c)) for handlers to use in
-// visibility filtering and ownership checks. A missing token, or one auth-api rejects, resolves
-// to an anonymous viewer ("") rather than aborting the request - reads must stay accessible to
-// anonymous callers for anything public.
+// visibility filtering and ownership checks. A missing token, one auth-api rejects, or a subject
+// with no provisioned user profile resolves to an anonymous viewer ("") rather than aborting the
+// request - reads must stay accessible to anonymous callers for anything public.
+//
+// The viewer identity stored in the context is the caller's canonical users._id user ID (the
+// value of user_id throughout Game Room after the migrate-game-room-user-ids cutover), not the
+// raw third-party subject. Resolving it requires a users-api round trip for authenticated
+// callers; an unresolvable subject yields "" so owner-scoped writes are rejected.
 func ResolveViewer(client *Client) gin.HandlerFunc <span class="cov0" title="0">{
         return func(c *gin.Context) </span><span class="cov0" title="0">{
                 token := bearerToken(c)
@@ -220,12 +272,16 @@ func ResolveViewer(client *Client) gin.HandlerFunc <span class="cov0" title="0">
                         return
                 }</span>
 
-                <span class="cov0" title="0">c.Set(viewerContextKey, result.Sub)
+                <span class="cov0" title="0">userID := client.ResolveUserID(c.Request.Context(), token)
+                if userID == "" </span><span class="cov0" title="0">{
+                        logging.Logger.Debug("subject has no provisioned user, treating caller as anonymous", "sub", result.Sub)
+                }</span>
+                <span class="cov0" title="0">c.Set(viewerContextKey, userID)
                 c.Next()</span>
         }
 }
 
-// Viewer returns the caller's resolved subject, or "" for an anonymous viewer.
+// Viewer returns the caller's canonical users._id user ID, or "" for an anonymous viewer.
 func Viewer(c *gin.Context) string <span class="cov0" title="0">{
         if v, ok := c.Get(viewerContextKey); ok </span><span class="cov0" title="0">{
                 if sub, ok := v.(string); ok </span><span class="cov0" title="0">{
@@ -431,7 +487,7 @@ func main() <span class="cov0" title="0">{
 
         r.Use(RateLimiter(redisPool))
 
-        authzClient := authz.NewClient(util.GetEnv(constants.AUTH_API_URL, ""))
+        authzClient := authz.NewClient(util.GetEnv(constants.AUTH_API_URL, ""), util.GetEnv(constants.USERS_API_URL, ""))
 
         server.SetupHandlers(r, cache, ttls, authzClient)
 
