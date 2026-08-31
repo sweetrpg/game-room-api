@@ -1,4 +1,11 @@
 
+## 0.5.0 - 2026-08-31
+
+### Added
+- Resolve canonical user id from users-api profile
+
+
+
 ## 0.4.0 - 2026-08-31
 
 ### Added

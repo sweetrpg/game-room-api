@@ -97,7 +97,7 @@ func main() {
 
 	r.Use(RateLimiter(redisPool))
 
-	authzClient := authz.NewClient(util.GetEnv(constants.AUTH_API_URL, ""))
+	authzClient := authz.NewClient(util.GetEnv(constants.AUTH_API_URL, ""), util.GetEnv(constants.USERS_API_URL, ""))
 
 	server.SetupHandlers(r, cache, ttls, authzClient)
 
