@@ -1,4 +1,11 @@
 
+## 0.4.0 - 2026-08-31
+
+### Added
+- Add release-blocking wishlist name backfill
+
+
+
 ## 0.3.0 - 2026-08-30
 
 ### Added
