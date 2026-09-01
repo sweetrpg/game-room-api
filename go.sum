@@ -304,8 +304,8 @@ github.com/sweetrpg/api-core.go v0.1.1 h1:qqr5Rgiaw7n2RtDZ7fdoy5vw8RT3L42orhJ/x+
 github.com/sweetrpg/api-core.go v0.1.1/go.mod h1:ka2gLYUlukRaBXiaaohfRSHoNH77oSrTkkik07Z+lj0=
 github.com/sweetrpg/common.go v0.0.16 h1:XT8PwUXz0BOMIITXLjw3G6rEjjRUEs0Xs4+R9o2fVBk=
 github.com/sweetrpg/common.go v0.0.16/go.mod h1:PVpjDIeB/bZYJZk5fc8whuqVJE8K5k/DsO3o+aZFEcE=
-github.com/sweetrpg/game-room-data.go v0.4.1-0.20260901193139-497bfc9ec891 h1:Vzn93m/2BXM5Q/rqdxi8veaRy1U1ZFI4aNrniTSLzO8=
-github.com/sweetrpg/game-room-data.go v0.4.1-0.20260901193139-497bfc9ec891/go.mod h1:vr6TXZoxO6VeekNWACNXACniy9ss/uAngBFUrSatf00=
+github.com/sweetrpg/game-room-data.go v0.4.1-0.20260901202412-95dac57298f2 h1:s2buCZOI0G7NOj1pg5jj38mw0JM7U8cfh7iz5LIaZL0=
+github.com/sweetrpg/game-room-data.go v0.4.1-0.20260901202412-95dac57298f2/go.mod h1:vr6TXZoxO6VeekNWACNXACniy9ss/uAngBFUrSatf00=
 github.com/sweetrpg/game-room-objects.go v0.2.2 h1:qJBLZRgfu4gu8qW67UiZwFwybklaXVpfG7IpbBvgLrU=
 github.com/sweetrpg/game-room-objects.go v0.2.2/go.mod h1:az0qPJQp3aYUI6h6AB/qws0sFvmCWdwDrVDj4YcYyXY=
 github.com/sweetrpg/model-core.go v0.0.173 h1:mIZ4z0ETkCH7I3Az0jwTFOyh66OTm7Z4/f0Rx/w+5Fk=

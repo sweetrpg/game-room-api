@@ -21,7 +21,7 @@ require (
 	github.com/swaggo/swag v1.16.6
 	github.com/sweetrpg/api-core.go v0.1.1
 	github.com/sweetrpg/common.go v0.0.16
-	github.com/sweetrpg/game-room-data.go v0.4.1-0.20260901193139-497bfc9ec891
+	github.com/sweetrpg/game-room-data.go v0.4.1-0.20260901202412-95dac57298f2
 	github.com/sweetrpg/game-room-objects.go v0.2.2
 	github.com/sweetrpg/mongodb.go v0.0.193
 	go.mongodb.org/mongo-driver v1.17.9
