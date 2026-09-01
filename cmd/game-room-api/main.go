@@ -33,6 +33,7 @@ import (
 	"github.com/sweetrpg/game-room-api/cachettl"
 	"github.com/sweetrpg/game-room-api/constants"
 	"github.com/sweetrpg/game-room-api/docs"
+	"github.com/sweetrpg/game-room-api/internal/consumer"
 	"github.com/sweetrpg/game-room-api/ratelimit"
 	"github.com/sweetrpg/game-room-api/readiness"
 	"github.com/sweetrpg/game-room-api/server"
@@ -101,6 +102,20 @@ func main() {
 
 	server.SetupHandlers(r, cache, ttls, authzClient)
 
+	// Create and start the volume title sync consumer
+	volumeHandler := consumer.NewVolumeEventHandler(cache)
+	c := consumer.New(volumeHandler)
+	if err := c.Start(context.Background()); err != nil {
+		logging.Logger.Error("Failed to start consumer", "error", err)
+		// Log but don't fail startup - consumer is not critical
+	}
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		_ = c.Stop(ctx)
+	}()
+
+	// Run the HTTP server
 	_ = r.Run(util.GetEnv(apiconstants.BIND_ADDRESS, ":8000"))
 }
 
