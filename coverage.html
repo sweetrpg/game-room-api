@@ -152,13 +152,13 @@ func NewClient(authBaseURL, usersBaseURL string) *Client <span class="cov0" titl
         return &amp;Client{baseURL: authBaseURL, usersBaseURL: usersBaseURL, http: &amp;http.Client{Timeout: 5 * time.Second}}
 }</span>
 
-// profileResponse is the slice of users-api's /api/profile response game-room-api reads.
+// profileResponse is the slice of users-api's /profile response game-room-api reads.
 type profileResponse struct {
         UserID string `json:"user_id"`
 }
 
 // ResolveUserID exchanges a verified bearer token for the caller's canonical users._id user ID
-// by calling users-api's /api/profile. It returns "" when the token is missing, the user has no
+// by calling users-api's /profile. It returns "" when the token is missing, the user has no
 // provisioned profile (HTTP 404), or users-api is unavailable - all of which ResolveViewer
 // treats as an unprovisioned/anonymous viewer.
 func (c *Client) ResolveUserID(ctx context.Context, token string) string <span class="cov10" title="6">{
@@ -166,7 +166,7 @@ func (c *Client) ResolveUserID(ctx context.Context, token string) string <span c
                 return ""
         }</span>
 
-        <span class="cov7" title="4">req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.usersBaseURL+"/api/profile", nil)
+        <span class="cov7" title="4">req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.usersBaseURL+"/profile", nil)
         if err != nil </span><span class="cov0" title="0">{
                 logging.Logger.Debug("users-api resolve: build request", "error", err.Error())
                 return ""
