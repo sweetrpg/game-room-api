@@ -34,3 +34,7 @@ data:
   # GET /api/profile (migrate-game-room-user-ids). Unset would resolve every authenticated
   # caller as anonymous and 403 every owner-scoped write.
   USERS_API_URL: http://api-v1.sweetrpg-users.svc.cluster.local:8000
+  # Volume title sync consumer (task 4.2-4.6: consume catalog volume.updated events and sync titles)
+  NATS_URL: nats://nats.sweetrpg-messaging.svc.cluster.local:4222
+  NATS_STREAM: CATALOG_EVENTS
+  NATS_DURABLE_NAME: game-room-api-volume-title-sync
