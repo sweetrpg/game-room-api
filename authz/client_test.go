@@ -45,8 +45,8 @@ func TestResolveUserID(t *testing.T) {
 			if got != tt.wantUserID {
 				t.Errorf("ResolveUserID = %q, want %q", got, tt.wantUserID)
 			}
-			if gotPath != "/api/profile" {
-				t.Errorf("requested path = %q, want /api/profile", gotPath)
+			if gotPath != "/profile" {
+				t.Errorf("requested path = %q, want /profile", gotPath)
 			}
 			if gotAuth != "Bearer test-token" {
 				t.Errorf("Authorization header = %q, want %q", gotAuth, "Bearer test-token")

@@ -46,13 +46,13 @@ func NewClient(authBaseURL, usersBaseURL string) *Client {
 	return &Client{baseURL: authBaseURL, usersBaseURL: usersBaseURL, http: &http.Client{Timeout: 5 * time.Second}}
 }
 
-// profileResponse is the slice of users-api's /api/profile response game-room-api reads.
+// profileResponse is the slice of users-api's /profile response game-room-api reads.
 type profileResponse struct {
 	UserID string `json:"user_id"`
 }
 
 // ResolveUserID exchanges a verified bearer token for the caller's canonical users._id user ID
-// by calling users-api's /api/profile. It returns "" when the token is missing, the user has no
+// by calling users-api's /profile. It returns "" when the token is missing, the user has no
 // provisioned profile (HTTP 404), or users-api is unavailable - all of which ResolveViewer
 // treats as an unprovisioned/anonymous viewer.
 func (c *Client) ResolveUserID(ctx context.Context, token string) string {
@@ -60,7 +60,7 @@ func (c *Client) ResolveUserID(ctx context.Context, token string) string {
 		return ""
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.usersBaseURL+"/api/profile", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.usersBaseURL+"/profile", nil)
 	if err != nil {
 		logging.Logger.Debug("users-api resolve: build request", "error", err.Error())
 		return ""
