@@ -61,27 +61,33 @@
 				
 				<option value="file2">github.com/sweetrpg/game-room-api/cachettl/cachettl.go (100.0%)</option>
 				
-				<option value="file3">github.com/sweetrpg/game-room-api/cmd/game-room-api/main.go (0.0%)</option>
+				<option value="file3">github.com/sweetrpg/game-room-api/cmd/consumer/main.go (0.0%)</option>
 				
-				<option value="file4">github.com/sweetrpg/game-room-api/cmd/migrate-wishlist-names/main.go (0.0%)</option>
+				<option value="file4">github.com/sweetrpg/game-room-api/cmd/game-room-api/main.go (0.0%)</option>
 				
-				<option value="file5">github.com/sweetrpg/game-room-api/docs/docs.go (0.0%)</option>
+				<option value="file5">github.com/sweetrpg/game-room-api/cmd/migrate-wishlist-names/main.go (0.0%)</option>
 				
-				<option value="file6">github.com/sweetrpg/game-room-api/ratelimit/ratelimit.go (91.7%)</option>
+				<option value="file6">github.com/sweetrpg/game-room-api/docs/docs.go (0.0%)</option>
 				
-				<option value="file7">github.com/sweetrpg/game-room-api/readiness/readiness.go (0.0%)</option>
+				<option value="file7">github.com/sweetrpg/game-room-api/internal/consumer/consumer.go (75.0%)</option>
 				
-				<option value="file8">github.com/sweetrpg/game-room-api/server/common.go (0.0%)</option>
+				<option value="file8">github.com/sweetrpg/game-room-api/internal/consumer/handler.go (0.0%)</option>
 				
-				<option value="file9">github.com/sweetrpg/game-room-api/server/handlers.go (0.0%)</option>
+				<option value="file9">github.com/sweetrpg/game-room-api/ratelimit/ratelimit.go (91.7%)</option>
 				
-				<option value="file10">github.com/sweetrpg/game-room-api/server/library.go (0.0%)</option>
+				<option value="file10">github.com/sweetrpg/game-room-api/readiness/readiness.go (0.0%)</option>
 				
-				<option value="file11">github.com/sweetrpg/game-room-api/server/status.go (0.0%)</option>
+				<option value="file11">github.com/sweetrpg/game-room-api/server/common.go (0.0%)</option>
 				
-				<option value="file12">github.com/sweetrpg/game-room-api/server/table.go (0.0%)</option>
+				<option value="file12">github.com/sweetrpg/game-room-api/server/handlers.go (0.0%)</option>
 				
-				<option value="file13">github.com/sweetrpg/game-room-api/server/wishlist.go (0.0%)</option>
+				<option value="file13">github.com/sweetrpg/game-room-api/server/library.go (0.0%)</option>
+				
+				<option value="file14">github.com/sweetrpg/game-room-api/server/status.go (0.0%)</option>
+				
+				<option value="file15">github.com/sweetrpg/game-room-api/server/table.go (0.0%)</option>
+				
+				<option value="file16">github.com/sweetrpg/game-room-api/server/wishlist.go (0.0%)</option>
 				
 				</select>
 			</div>
@@ -392,6 +398,57 @@ func (c Config) TTL(route string) time.Duration <span class="cov9" title="8">{
 
 import (
         "context"
+        "log"
+        "os"
+        "os/signal"
+        "syscall"
+        "time"
+
+        "github.com/joho/godotenv"
+        "github.com/sweetrpg/common.go/logging"
+        "github.com/sweetrpg/game-room-api/internal/consumer"
+        "github.com/sweetrpg/mongodb.go/database"
+)
+
+func main() <span class="cov0" title="0">{
+        _ = godotenv.Load(".env")
+
+        logging.Init()
+
+        // Setup database connection
+        database.SetupDatabase()
+        defer database.TeardownDatabase()
+
+        // Standalone runs (local dev) have no cache to invalidate; the in-process worker in
+        // cmd/game-room-api passes the API's real store. A nil store is handled as a no-op.
+        handler := consumer.NewVolumeEventHandler(nil)
+
+        // Create and start the consumer
+        c := consumer.New(handler)
+        if err := c.Start(context.Background()); err != nil </span><span class="cov0" title="0">{
+                log.Fatalf("Failed to start consumer: %v", err)
+        }</span>
+
+        // Wait for interrupt signal
+        <span class="cov0" title="0">sigChan := make(chan os.Signal, 1)
+        signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+        &lt;-sigChan
+
+        // Graceful shutdown
+        ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+        defer cancel()
+
+        if err := c.Stop(ctx); err != nil </span><span class="cov0" title="0">{
+                log.Fatalf("Failed to stop consumer: %v", err)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package main
+
+import (
+        "context"
         "fmt"
         "log"
         "log/slog"
@@ -423,6 +480,7 @@ import (
         "github.com/sweetrpg/game-room-api/cachettl"
         "github.com/sweetrpg/game-room-api/constants"
         "github.com/sweetrpg/game-room-api/docs"
+        "github.com/sweetrpg/game-room-api/internal/consumer"
         "github.com/sweetrpg/game-room-api/ratelimit"
         "github.com/sweetrpg/game-room-api/readiness"
         "github.com/sweetrpg/game-room-api/server"
@@ -491,7 +549,21 @@ func main() <span class="cov0" title="0">{
 
         server.SetupHandlers(r, cache, ttls, authzClient)
 
-        _ = r.Run(util.GetEnv(apiconstants.BIND_ADDRESS, ":8000"))</span>
+        // Create and start the volume title sync consumer
+        volumeHandler := consumer.NewVolumeEventHandler(cache)
+        c := consumer.New(volumeHandler)
+        if err := c.Start(context.Background()); err != nil </span><span class="cov0" title="0">{
+                logging.Logger.Error("Failed to start consumer", "error", err)
+                // Log but don't fail startup - consumer is not critical
+        }</span>
+        <span class="cov0" title="0">defer func() </span><span class="cov0" title="0">{
+                ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+                defer cancel()
+                _ = c.Stop(ctx)
+        }</span>()
+
+        // Run the HTTP server
+        <span class="cov0" title="0">_ = r.Run(util.GetEnv(apiconstants.BIND_ADDRESS, ":8000"))</span>
 }
 
 func setupSwagger(r *gin.Engine) <span class="cov0" title="0">{
@@ -810,7 +882,7 @@ func globalRateLimiter() gin.HandlerFunc <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file4" style="display: none">// migrate-wishlist-names runs the one-time migration that backfills the default
+		<pre class="file" id="file5" style="display: none">// migrate-wishlist-names runs the one-time migration that backfills the default
 // wishlist name onto documents stored before the multi-wishlist cutover.
 //
 // Safe to run more than once: data.MigrateWishlistNames leaves already-named
@@ -856,7 +928,7 @@ func main() <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file5" style="display: none">// Package docs Code generated by swaggo/swag. DO NOT EDIT
+		<pre class="file" id="file6" style="display: none">// Package docs Code generated by swaggo/swag. DO NOT EDIT
 package docs
 
 import "github.com/swaggo/swag"
@@ -1937,7 +2009,207 @@ func init() <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file6" style="display: none">// Package ratelimit implements a Redis-backed, per-client, per-route-tier request rate
+		<pre class="file" id="file7" style="display: none">package consumer
+
+import (
+        "context"
+        "encoding/json"
+        "fmt"
+        "os"
+
+        "github.com/nats-io/nats.go"
+        "github.com/nats-io/nats.go/jetstream"
+        "github.com/sweetrpg/common.go/logging"
+        "github.com/sweetrpg/common.go/util"
+)
+
+// EventEnvelope is the platform event contract (see sweetrpg/platform docs/messaging-nats.md).
+// Unknown fields are ignored so the envelope can grow without breaking this consumer.
+type EventEnvelope struct {
+        EventID    string                 `json:"event_id"`
+        OccurredAt string                 `json:"occurred_at"`
+        Source     string                 `json:"source"`
+        EntityType string                 `json:"entity_type"`
+        EntityID   string                 `json:"entity_id"`
+        Action     string                 `json:"action"`
+        Revision   int                    `json:"revision"`
+        Data       map[string]interface{} `json:"data"`
+}
+
+type EventHandler interface {
+        HandleVolumeUpdated(ctx context.Context, event *EventEnvelope) error
+}
+
+const (
+        defaultStreamName      = "CATALOG_EVENTS"
+        defaultDurableConsumer = "game-room-api-volume-title-sync"
+        filterSubject          = "catalog.events.volume.updated"
+)
+
+// Consumer binds a durable JetStream pull consumer on the catalog events stream and applies
+// volume.updated events to library entries. It runs as a background worker of the API process
+// and is also startable standalone via cmd/consumer.
+type Consumer struct {
+        handler EventHandler
+        conn    *nats.Conn
+        cc      jetstream.ConsumeContext
+}
+
+func New(handler EventHandler) *Consumer <span class="cov8" title="5">{
+        return &amp;Consumer{handler: handler}
+}</span>
+
+// Start connects to NATS, binds the durable consumer, and begins consuming in the background.
+// Safe to pair with Stop even if Start returns an error.
+func (c *Consumer) Start(ctx context.Context) error <span class="cov8" title="5">{
+        natsURL := util.GetEnv("NATS_URL", "nats://localhost:4222")
+        streamName := util.GetEnv("NATS_STREAM", defaultStreamName)
+        durableName := util.GetEnv("NATS_DURABLE_NAME", defaultDurableConsumer)
+
+        opts := []nats.Option{nats.Name(durableName)}
+        if creds := os.Getenv("NATS_CREDS"); creds != "" </span><span class="cov0" title="0">{
+                opts = append(opts, nats.UserCredentials(creds))
+        }</span> else<span class="cov8" title="5"> if user := os.Getenv("NATS_USER"); user != "" </span><span class="cov0" title="0">{
+                opts = append(opts, nats.UserInfo(user, os.Getenv("NATS_PASSWORD")))
+        }</span>
+        <span class="cov8" title="5">conn, err := nats.Connect(natsURL, opts...)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("connect to NATS at %s: %w", natsURL, err)
+        }</span>
+        <span class="cov8" title="5">c.conn = conn
+
+        js, err := jetstream.New(conn)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("create JetStream context: %w", err)
+        }</span>
+
+        // Idempotent: matches the declaratively-managed Consumer CRD where a controller creates it,
+        // and creates it directly for local runs where none does. The durable name is stable so a
+        // redeploy resumes from the last acknowledged position.
+        <span class="cov8" title="5">cons, err := js.CreateOrUpdateConsumer(ctx, streamName, jetstream.ConsumerConfig{
+                Durable:       durableName,
+                FilterSubject: filterSubject,
+                AckPolicy:     jetstream.AckExplicitPolicy,
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("bind durable consumer %q on stream %q: %w", durableName, streamName, err)
+        }</span>
+
+        <span class="cov8" title="5">cc, err := cons.Consume(func(msg jetstream.Msg) </span><span class="cov10" title="7">{ c.process(ctx, msg) }</span>)
+        <span class="cov8" title="5">if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("start consuming: %w", err)
+        }</span>
+        <span class="cov8" title="5">c.cc = cc
+
+        logging.Logger.Info("volume-title-sync consumer bound",
+                "stream", streamName, "durable", durableName, "subject", filterSubject)
+        return nil</span>
+}
+
+// Stop halts consumption and closes the connection. Idempotent.
+func (c *Consumer) Stop(context.Context) error <span class="cov8" title="5">{
+        if c.cc != nil </span><span class="cov8" title="5">{
+                c.cc.Stop()
+                c.cc = nil
+        }</span>
+        <span class="cov8" title="5">if c.conn != nil </span><span class="cov8" title="5">{
+                c.conn.Close()
+                c.conn = nil
+        }</span>
+        <span class="cov8" title="5">logging.Logger.Info("volume-title-sync consumer stopped")
+        return nil</span>
+}
+
+func (c *Consumer) process(ctx context.Context, msg jetstream.Msg) <span class="cov10" title="7">{
+        var env EventEnvelope
+        if err := json.Unmarshal(msg.Data(), &amp;env); err != nil </span><span class="cov0" title="0">{
+                // A poison message would redeliver forever; ack it and move on.
+                logging.Logger.Error("dropping unparseable event", "error", err)
+                _ = msg.Ack()
+                return
+        }</span>
+
+        <span class="cov10" title="7">if env.EntityType != "volume" || env.Action != "updated" </span><span class="cov0" title="0">{
+                // The subject filter should exclude these; ack defensively if the server widens it.
+                _ = msg.Ack()
+                return
+        }</span>
+
+        <span class="cov10" title="7">if err := c.handler.HandleVolumeUpdated(ctx, &amp;env); err != nil </span><span class="cov4" title="2">{
+                // Do not ack: JetStream redelivers after the ack wait.
+                logging.Logger.Error("volume.updated handling failed, will retry",
+                        "event_id", env.EventID, "volume_id", env.EntityID, "error", err)
+                _ = msg.Nak()
+                return
+        }</span>
+        <span class="cov8" title="5">if err := msg.Ack(); err != nil </span><span class="cov0" title="0">{
+                logging.Logger.Error("ack failed", "event_id", env.EventID, "volume_id", env.EntityID, "error", err)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package consumer
+
+import (
+        "context"
+        "errors"
+        "fmt"
+
+        "github.com/gin-contrib/cache"
+        "github.com/gin-contrib/cache/persistence"
+        "github.com/sweetrpg/common.go/logging"
+        "github.com/sweetrpg/game-room-data.go/data"
+)
+
+// VolumeEventHandler applies volume.updated events: refresh the denormalized title on every
+// referencing library entry, then drop those users' cached library pages.
+type VolumeEventHandler struct {
+        cache persistence.CacheStore
+}
+
+func NewVolumeEventHandler(store persistence.CacheStore) *VolumeEventHandler <span class="cov0" title="0">{
+        return &amp;VolumeEventHandler{cache: store}
+}</span>
+
+func (h *VolumeEventHandler) HandleVolumeUpdated(ctx context.Context, event *EventEnvelope) error <span class="cov0" title="0">{
+        volumeID := event.EntityID
+        if volumeID == "" </span><span class="cov0" title="0">{
+                return fmt.Errorf("volume.updated event %s has no entity_id", event.EventID)
+        }</span>
+        <span class="cov0" title="0">title, _ := event.Data["title"].(string)
+        if title == "" </span><span class="cov0" title="0">{
+                logging.Logger.Warn("volume.updated event has no data.title",
+                        "event_id", event.EventID, "volume_id", volumeID)
+                return nil
+        }</span>
+
+        <span class="cov0" title="0">affected, err := data.UpdateLibraryEntryTitleByVolume(ctx, volumeID, title)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("update library titles for volume %s: %w", volumeID, err)
+        }</span>
+
+        <span class="cov0" title="0">h.invalidateLibraryCache(affected)
+        logging.Logger.Info("volume title synced",
+                "event_id", event.EventID, "volume_id", volumeID, "users", len(affected))
+        return nil</span>
+}
+
+// invalidateLibraryCache drops the cached library-list page for each user whose entries changed,
+// so their next read reflects the new title. gin-contrib/cache keys the library GET by its URL.
+func (h *VolumeEventHandler) invalidateLibraryCache(userIDs []string) <span class="cov0" title="0">{
+        if h.cache == nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+        <span class="cov0" title="0">for _, uid := range userIDs </span><span class="cov0" title="0">{
+                key := cache.CreateKey("/users/" + uid + "/library")
+                if err := h.cache.Delete(key); err != nil &amp;&amp; !errors.Is(err, persistence.ErrCacheMiss) </span><span class="cov0" title="0">{
+                        logging.Logger.Warn("library cache invalidation failed", "user_id", uid, "error", err)
+                }</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">// Package ratelimit implements a Redis-backed, per-client, per-route-tier request rate
 // limiter. Counters live in Redis (INCR + EXPIRE) rather than per-pod memory, so the limit is
 // consistent across catalog-api's replicas instead of being N times looser depending on how
 // many pods happen to be up.
@@ -2010,7 +2282,7 @@ func Ping(ctx context.Context, pool *redis.Pool) error <span class="cov3" title=
 }
 </pre>
 		
-		<pre class="file" id="file7" style="display: none">// Package readiness tracks the reachability of backend dependencies (beyond Mongo, which
+		<pre class="file" id="file10" style="display: none">// Package readiness tracks the reachability of backend dependencies (beyond Mongo, which
 // api-core.go's HealthHandler already covers) so /status/health can fail loud instead of the
 // service silently degrading to an uncached or unlimited mode.
 package readiness
@@ -2044,7 +2316,7 @@ func CacheReady(ctx context.Context) bool <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file8" style="display: none">package server
+		<pre class="file" id="file11" style="display: none">package server
 
 import (
         "net/http"
@@ -2108,7 +2380,7 @@ func internalError(c *gin.Context, err error) <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file9" style="display: none">package server
+		<pre class="file" id="file12" style="display: none">package server
 
 import (
         "github.com/gin-contrib/cache/persistence"
@@ -2125,7 +2397,7 @@ func SetupHandlers(g *gin.Engine, cache persistence.CacheStore, ttls cachettl.Co
 }</span>
 </pre>
 		
-		<pre class="file" id="file10" style="display: none">package server
+		<pre class="file" id="file13" style="display: none">package server
 
 import (
         "errors"
@@ -2358,7 +2630,7 @@ func previewLibraryDefaultVisibility(c *gin.Context) <span class="cov0" title="0
 }
 </pre>
 		
-		<pre class="file" id="file11" style="display: none">package server
+		<pre class="file" id="file14" style="display: none">package server
 
 import (
         "net/http"
@@ -2412,7 +2684,7 @@ func pingHandler(c *gin.Context) <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file12" style="display: none">package server
+		<pre class="file" id="file15" style="display: none">package server
 
 import (
         "net/http"
@@ -2683,7 +2955,7 @@ func setTableVisibility(c *gin.Context) <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file13" style="display: none">package server
+		<pre class="file" id="file16" style="display: none">package server
 
 import (
         "net/http"
