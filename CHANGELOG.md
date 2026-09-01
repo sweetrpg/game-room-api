@@ -1,4 +1,11 @@
 
+## 0.7.0 - 2026-09-01
+
+### Added
+- Wire USERS_API_URL and cover canonical user id resolution
+
+
+
 ## 0.6.0 - 2026-08-31
 
 ### Added
