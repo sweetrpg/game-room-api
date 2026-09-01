@@ -1,4 +1,11 @@
 
+## 0.8.0 - 2026-09-01
+
+### Added
+- Thread acting user into every data-layer write
+
+
+
 ## 0.7.1 - 2026-09-01
 
 ### Fixed
