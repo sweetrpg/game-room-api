@@ -1,4 +1,11 @@
 
+## 0.7.1 - 2026-09-01
+
+### Fixed
+- Call users-api /profile, not /api/profile
+
+
+
 ## 0.7.0 - 2026-09-01
 
 ### Added
