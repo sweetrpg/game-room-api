@@ -30,3 +30,7 @@ data:
   # authz.Client fails open to an empty baseURL rather than refusing to start - unset here
   # silently returns every viewer as anonymous rather than a startup error.
   AUTH_API_URL: http://api-v1.sweetrpg-auth.svc.cluster.local:8000
+  # USERS_API_URL resolves the verified subject to its canonical users._id user ID via
+  # GET /api/profile (migrate-game-room-user-ids). Unset would resolve every authenticated
+  # caller as anonymous and 403 every owner-scoped write.
+  USERS_API_URL: http://api-v1.sweetrpg-users.svc.cluster.local:8000
