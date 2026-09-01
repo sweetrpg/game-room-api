@@ -12,7 +12,7 @@ require (
 	github.com/grafana/pyroscope-go v1.4.2
 	github.com/joho/godotenv v1.5.1
 	github.com/nats-io/nats-server/v2 v2.14.6
-	github.com/nats-io/nats.go v1.51.0
+	github.com/nats-io/nats.go v1.53.1
 	github.com/penglongli/gin-metrics v0.1.13
 	github.com/samber/slog-gin v1.21.1
 	github.com/sinhashubham95/go-actuator v1.6.0
@@ -21,7 +21,7 @@ require (
 	github.com/swaggo/swag v1.16.6
 	github.com/sweetrpg/api-core.go v0.1.1
 	github.com/sweetrpg/common.go v0.0.16
-	github.com/sweetrpg/game-room-data.go v0.4.1-0.20260901202412-95dac57298f2
+	github.com/sweetrpg/game-room-data.go v0.5.0
 	github.com/sweetrpg/game-room-objects.go v0.2.2
 	github.com/sweetrpg/mongodb.go v0.0.193
 	go.mongodb.org/mongo-driver v1.17.9
