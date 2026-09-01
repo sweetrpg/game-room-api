@@ -78,7 +78,6 @@ func (c *Consumer) Start(ctx context.Context) error {
 		Durable:       durableName,
 		FilterSubject: filterSubject,
 		AckPolicy:     jetstream.AckExplicitPolicy,
-		MaxAckPending: 100,
 	})
 	if err != nil {
 		return fmt.Errorf("bind durable consumer %q on stream %q: %w", durableName, streamName, err)
