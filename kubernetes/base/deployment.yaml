@@ -47,13 +47,13 @@ spec:
                             name: api-misc
                       - secretRef:
                             name: api-cache
+                      - secretRef:
+                            name: api-nats
                   env:
                       - name: GOMEMLIMIT
                         value: "900MiB"
                       - name: GOGC
                         value: "90"
-                      - name: NATS_CREDS
-                        value: "/secrets/nats/creds"
                   ports:
                       - containerPort: 8000
                         name: http
@@ -90,16 +90,7 @@ spec:
                   volumeMounts:
                       - mountPath: /data
                         name: data
-                      - mountPath: /secrets/nats
-                        name: nats-creds
-                        readOnly: true
             volumes:
                 - name: data
                   emptyDir: {}
-                - name: nats-creds
-                  secret:
-                      secretName: api-nats
-                      items:
-                          - key: NATS_CREDS
-                            path: creds
             restartPolicy: Always

@@ -52,13 +52,14 @@ func New(handler EventHandler) *Consumer {
 // Safe to pair with Stop even if Start returns an error.
 func (c *Consumer) Start(ctx context.Context) error {
 	natsURL := util.GetEnv("NATS_URL", "nats://localhost:4222")
-	credsPath := os.Getenv("NATS_CREDS")
 	streamName := util.GetEnv("NATS_STREAM", defaultStreamName)
 	durableName := util.GetEnv("NATS_DURABLE_NAME", defaultDurableConsumer)
 
 	opts := []nats.Option{nats.Name(durableName)}
-	if credsPath != "" {
-		opts = append(opts, nats.UserCredentials(credsPath))
+	if creds := os.Getenv("NATS_CREDS"); creds != "" {
+		opts = append(opts, nats.UserCredentials(creds))
+	} else if user := os.Getenv("NATS_USER"); user != "" {
+		opts = append(opts, nats.UserInfo(user, os.Getenv("NATS_PASSWORD")))
 	}
 	conn, err := nats.Connect(natsURL, opts...)
 	if err != nil {
