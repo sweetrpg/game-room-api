@@ -15,7 +15,7 @@ func TestUpdateLibraryEntryTitle(t *testing.T) {
 	setupTestDB(t)
 	userID := primitive.NewObjectID().Hex()
 
-	_, err := data.AddLibraryEntry(t.Context(), userID, "vol-1", "Old Title")
+	_, err := data.AddLibraryEntry(t.Context(), userID, "vol-1", "Old Title", userID)
 	if err != nil {
 		t.Fatalf("seed entry: %v", err)
 	}
@@ -45,7 +45,7 @@ func TestUpdateLibraryEntryTitleMissingEntry(t *testing.T) {
 	setupTestDB(t)
 	userID := primitive.NewObjectID().Hex()
 
-	_, err := data.AddLibraryEntry(t.Context(), userID, "vol-1", "Maus I")
+	_, err := data.AddLibraryEntry(t.Context(), userID, "vol-1", "Maus I", userID)
 	if err != nil {
 		t.Fatalf("seed entry: %v", err)
 	}

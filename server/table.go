@@ -121,7 +121,7 @@ func createTable(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "name is required"})
 		return
 	}
-	tbl, err := data.CreateTable(c.Request.Context(), c.Param("user_id"), req.Name)
+	tbl, err := data.CreateTable(c.Request.Context(), c.Param("user_id"), req.Name, authz.Viewer(c))
 	if err != nil {
 		internalError(c, err)
 		return
@@ -148,7 +148,7 @@ func updateTableName(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "name is required"})
 		return
 	}
-	tbl, err := data.UpdateTableName(c.Request.Context(), c.Param("id"), c.Param("user_id"), req.Name)
+	tbl, err := data.UpdateTableName(c.Request.Context(), c.Param("id"), c.Param("user_id"), req.Name, authz.Viewer(c))
 	if err != nil {
 		internalError(c, err)
 		return
@@ -170,7 +170,7 @@ func updateTableName(c *gin.Context) {
 //	@Failure		500	{object}	interface{}
 //	@Router			/users/{user_id}/tables/{id} [delete]
 func deleteTable(c *gin.Context) {
-	deleted, err := data.DeleteTable(c.Request.Context(), c.Param("id"), c.Param("user_id"))
+	deleted, err := data.DeleteTable(c.Request.Context(), c.Param("id"), c.Param("user_id"), authz.Viewer(c))
 	if err != nil {
 		internalError(c, err)
 		return
@@ -201,7 +201,7 @@ func addTableVolume(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
 		return
 	}
-	tbl, err := data.AddTableVolume(c.Request.Context(), c.Param("id"), c.Param("user_id"), req.VolumeID)
+	tbl, err := data.AddTableVolume(c.Request.Context(), c.Param("id"), c.Param("user_id"), req.VolumeID, authz.Viewer(c))
 	if err != nil {
 		internalError(c, err)
 		return
@@ -225,7 +225,7 @@ func addTableVolume(c *gin.Context) {
 //	@Failure		500			{object}	interface{}
 //	@Router			/users/{user_id}/tables/{id}/volumes/{volume_id} [delete]
 func removeTableVolume(c *gin.Context) {
-	tbl, err := data.RemoveTableVolume(c.Request.Context(), c.Param("id"), c.Param("user_id"), c.Param("volume_id"))
+	tbl, err := data.RemoveTableVolume(c.Request.Context(), c.Param("id"), c.Param("user_id"), c.Param("volume_id"), authz.Viewer(c))
 	if err != nil {
 		internalError(c, err)
 		return
@@ -256,7 +256,7 @@ func setTableVisibility(c *gin.Context) {
 	if !ok {
 		return
 	}
-	tbl, err := data.SetTableVisibility(c.Request.Context(), c.Param("id"), c.Param("user_id"), v)
+	tbl, err := data.SetTableVisibility(c.Request.Context(), c.Param("id"), c.Param("user_id"), v, authz.Viewer(c))
 	if err != nil {
 		internalError(c, err)
 		return

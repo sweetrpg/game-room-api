@@ -120,7 +120,7 @@ func createWishlist(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "name is required"})
 		return
 	}
-	wl, err := data.CreateWishlist(c.Request.Context(), c.Param("user_id"), req.Name)
+	wl, err := data.CreateWishlist(c.Request.Context(), c.Param("user_id"), req.Name, authz.Viewer(c))
 	if err != nil {
 		internalError(c, err)
 		return
@@ -138,7 +138,7 @@ func createWishlist(c *gin.Context) {
 //	@Failure		500	{object}	interface{}
 //	@Router			/users/{user_id}/wishlists/{wishlist_id} [delete]
 func deleteWishlist(c *gin.Context) {
-	deleted, err := data.DeleteWishlist(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"))
+	deleted, err := data.DeleteWishlist(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), authz.Viewer(c))
 	if err != nil {
 		internalError(c, err)
 		return
@@ -169,7 +169,7 @@ func addWishlistEntry(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
 		return
 	}
-	wl, err := data.AddWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), req.VolumeID)
+	wl, err := data.AddWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), req.VolumeID, authz.Viewer(c))
 	if err != nil {
 		internalError(c, err)
 		return
@@ -193,7 +193,7 @@ func addWishlistEntry(c *gin.Context) {
 //	@Failure		500				{object}	interface{}
 //	@Router			/users/{user_id}/wishlists/{wishlist_id}/entries/{volume_id} [delete]
 func removeWishlistEntry(c *gin.Context) {
-	wl, err := data.RemoveWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), c.Param("volume_id"))
+	wl, err := data.RemoveWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), c.Param("volume_id"), authz.Viewer(c))
 	if err != nil {
 		internalError(c, err)
 		return
@@ -224,7 +224,7 @@ func setWishlistVisibility(c *gin.Context) {
 	if !ok {
 		return
 	}
-	wl, err := data.SetWishlistVisibility(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), v)
+	wl, err := data.SetWishlistVisibility(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), v, authz.Viewer(c))
 	if err != nil {
 		internalError(c, err)
 		return

@@ -71,7 +71,7 @@ func addLibraryEntry(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
 		return
 	}
-	lib, err := data.AddLibraryEntry(c.Request.Context(), c.Param("user_id"), req.VolumeID, req.VolumeTitle)
+	lib, err := data.AddLibraryEntry(c.Request.Context(), c.Param("user_id"), req.VolumeID, req.VolumeTitle, authz.Viewer(c))
 	if err != nil {
 		internalError(c, err)
 		return
@@ -90,7 +90,7 @@ func addLibraryEntry(c *gin.Context) {
 //	@Failure		500			{object}	interface{}
 //	@Router			/users/{user_id}/library/entries/{volume_id} [delete]
 func removeLibraryEntry(c *gin.Context) {
-	lib, err := data.RemoveLibraryEntry(c.Request.Context(), c.Param("user_id"), c.Param("volume_id"))
+	lib, err := data.RemoveLibraryEntry(c.Request.Context(), c.Param("user_id"), c.Param("volume_id"), authz.Viewer(c))
 	if err != nil {
 		internalError(c, err)
 		return
@@ -129,7 +129,7 @@ func setLibraryEntryVisibility(c *gin.Context) {
 		override = &v
 	}
 
-	lib, err := data.SetLibraryEntryVisibilityOverride(c.Request.Context(), c.Param("user_id"), c.Param("volume_id"), override)
+	lib, err := data.SetLibraryEntryVisibilityOverride(c.Request.Context(), c.Param("user_id"), c.Param("volume_id"), override, authz.Viewer(c))
 	if err != nil {
 		internalError(c, err)
 		return
@@ -158,7 +158,7 @@ func updateLibraryEntryTitle(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "title is required"})
 		return
 	}
-	lib, err := data.UpdateLibraryEntryTitle(c.Request.Context(), c.Param("user_id"), c.Param("volume_id"), req.Title)
+	lib, err := data.UpdateLibraryEntryTitle(c.Request.Context(), c.Param("user_id"), c.Param("volume_id"), req.Title, authz.Viewer(c))
 	if err != nil {
 		if errors.Is(err, data.ErrLibraryEntryNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{})
@@ -189,7 +189,7 @@ func setLibraryDefaultVisibility(c *gin.Context) {
 	if !ok {
 		return
 	}
-	lib, err := data.SetLibraryDefaultVisibility(c.Request.Context(), c.Param("user_id"), v)
+	lib, err := data.SetLibraryDefaultVisibility(c.Request.Context(), c.Param("user_id"), v, authz.Viewer(c))
 	if err != nil {
 		internalError(c, err)
 		return
