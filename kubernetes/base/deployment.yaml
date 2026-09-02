@@ -47,6 +47,8 @@ spec:
                             name: api-misc
                       - secretRef:
                             name: api-cache
+                      - secretRef:
+                            name: api-nats
                   env:
                       - name: GOMEMLIMIT
                         value: "900MiB"
