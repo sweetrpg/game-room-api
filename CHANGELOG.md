@@ -1,4 +1,20 @@
 
+## 0.9.0 - 2026-09-02
+
+### Added
+- JetStream consumer for volume title sync
+- NATS user/password auth
+
+
+### Fixed
+- Don't set MaxAckPending so app config matches the NACK Consumer CRD
+- Use conventional Akeyless path /sweetrpg/game-room-api/nats/creds
+- NATS_URL points at nats.nats-system (flux runs NATS there)
+- Drop NATS creds wiring - the flux-managed NATS has no auth
+- Akeyless path /sweetrpg/game-room/api/nats/auth (convention)
+
+
+
 ## 0.8.0 - 2026-09-01
 
 ### Added
