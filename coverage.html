@@ -65,29 +65,31 @@
 				
 				<option value="file4">github.com/sweetrpg/game-room-api/cmd/game-room-api/main.go (0.0%)</option>
 				
-				<option value="file5">github.com/sweetrpg/game-room-api/cmd/migrate-wishlist-names/main.go (0.0%)</option>
+				<option value="file5">github.com/sweetrpg/game-room-api/cmd/migrate-table-volume-titles/main.go (0.0%)</option>
 				
-				<option value="file6">github.com/sweetrpg/game-room-api/docs/docs.go (0.0%)</option>
+				<option value="file6">github.com/sweetrpg/game-room-api/cmd/migrate-wishlist-names/main.go (0.0%)</option>
 				
-				<option value="file7">github.com/sweetrpg/game-room-api/internal/consumer/consumer.go (75.0%)</option>
+				<option value="file7">github.com/sweetrpg/game-room-api/docs/docs.go (0.0%)</option>
 				
-				<option value="file8">github.com/sweetrpg/game-room-api/internal/consumer/handler.go (0.0%)</option>
+				<option value="file8">github.com/sweetrpg/game-room-api/internal/consumer/consumer.go (75.0%)</option>
 				
-				<option value="file9">github.com/sweetrpg/game-room-api/ratelimit/ratelimit.go (91.7%)</option>
+				<option value="file9">github.com/sweetrpg/game-room-api/internal/consumer/handler.go (7.3%)</option>
 				
-				<option value="file10">github.com/sweetrpg/game-room-api/readiness/readiness.go (0.0%)</option>
+				<option value="file10">github.com/sweetrpg/game-room-api/ratelimit/ratelimit.go (91.7%)</option>
 				
-				<option value="file11">github.com/sweetrpg/game-room-api/server/common.go (0.0%)</option>
+				<option value="file11">github.com/sweetrpg/game-room-api/readiness/readiness.go (0.0%)</option>
 				
-				<option value="file12">github.com/sweetrpg/game-room-api/server/handlers.go (0.0%)</option>
+				<option value="file12">github.com/sweetrpg/game-room-api/server/common.go (0.0%)</option>
 				
-				<option value="file13">github.com/sweetrpg/game-room-api/server/library.go (0.0%)</option>
+				<option value="file13">github.com/sweetrpg/game-room-api/server/handlers.go (0.0%)</option>
 				
-				<option value="file14">github.com/sweetrpg/game-room-api/server/status.go (0.0%)</option>
+				<option value="file14">github.com/sweetrpg/game-room-api/server/library.go (0.0%)</option>
 				
-				<option value="file15">github.com/sweetrpg/game-room-api/server/table.go (0.0%)</option>
+				<option value="file15">github.com/sweetrpg/game-room-api/server/status.go (0.0%)</option>
 				
-				<option value="file16">github.com/sweetrpg/game-room-api/server/wishlist.go (0.0%)</option>
+				<option value="file16">github.com/sweetrpg/game-room-api/server/table.go (0.0%)</option>
+				
+				<option value="file17">github.com/sweetrpg/game-room-api/server/wishlist.go (0.0%)</option>
 				
 				</select>
 			</div>
@@ -882,7 +884,53 @@ func globalRateLimiter() gin.HandlerFunc <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file5" style="display: none">// migrate-wishlist-names runs the one-time migration that backfills the default
+		<pre class="file" id="file5" style="display: none">// migrate-table-volume-titles runs the one-time structural migration that ensures every table
+// document has a volume_titles object, setting it to an empty object on tables stored before
+// the denormalized-title sidecar existed.
+//
+// Safe to run more than once: data.MigrateTableVolumeTitles leaves tables that already have the
+// field untouched and reports the number of documents updated. It populates no titles - those
+// fill in as volumes are re-added or as catalog volume.updated events arrive. Run it against
+// each environment's database after deploying the release that adds the sidecar.
+package main
+
+import (
+        "context"
+        "os"
+        "time"
+
+        "github.com/joho/godotenv"
+        "github.com/sweetrpg/common.go/logging"
+        "github.com/sweetrpg/game-room-data.go/data"
+        "github.com/sweetrpg/mongodb.go/database"
+)
+
+// migrateTimeout bounds a single run against a slow or unreachable database so a hang cannot
+// stall the release pipeline forever.
+const migrateTimeout = 60 * time.Second
+
+func main() <span class="cov0" title="0">{
+        _ = godotenv.Load(".env")
+
+        logging.Init()
+
+        database.SetupDatabase()
+        defer database.TeardownDatabase()
+
+        ctx, cancel := context.WithTimeout(context.Background(), migrateTimeout)
+        defer cancel()
+
+        count, err := data.MigrateTableVolumeTitles(ctx)
+        if err != nil </span><span class="cov0" title="0">{
+                logging.Logger.Error("Table volume-title migration failed", "error", err.Error())
+                os.Exit(1)
+        }</span>
+
+        <span class="cov0" title="0">logging.Logger.Info("Table volume-title migration complete", "updated", count)</span>
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">// migrate-wishlist-names runs the one-time migration that backfills the default
 // wishlist name onto documents stored before the multi-wishlist cutover.
 //
 // Safe to run more than once: data.MigrateWishlistNames leaves already-named
@@ -928,7 +976,7 @@ func main() <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file6" style="display: none">// Package docs Code generated by swaggo/swag. DO NOT EDIT
+		<pre class="file" id="file7" style="display: none">// Package docs Code generated by swaggo/swag. DO NOT EDIT
 package docs
 
 import "github.com/swaggo/swag"
@@ -2009,7 +2057,7 @@ func init() <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file7" style="display: none">package consumer
+		<pre class="file" id="file8" style="display: none">package consumer
 
 import (
         "context"
@@ -2148,7 +2196,7 @@ func (c *Consumer) process(ctx context.Context, msg jetstream.Msg) <span class="
 }
 </pre>
 		
-		<pre class="file" id="file8" style="display: none">package consumer
+		<pre class="file" id="file9" style="display: none">package consumer
 
 import (
         "context"
@@ -2162,18 +2210,19 @@ import (
 )
 
 // VolumeEventHandler applies volume.updated events: refresh the denormalized title on every
-// referencing library entry, then drop those users' cached library pages.
+// referencing library entry, table volume, and wishlist entry, then drop the affected users'
+// cached list and detail pages.
 type VolumeEventHandler struct {
         cache persistence.CacheStore
 }
 
-func NewVolumeEventHandler(store persistence.CacheStore) *VolumeEventHandler <span class="cov0" title="0">{
+func NewVolumeEventHandler(store persistence.CacheStore) *VolumeEventHandler <span class="cov8" title="1">{
         return &amp;VolumeEventHandler{cache: store}
 }</span>
 
-func (h *VolumeEventHandler) HandleVolumeUpdated(ctx context.Context, event *EventEnvelope) error <span class="cov0" title="0">{
+func (h *VolumeEventHandler) HandleVolumeUpdated(ctx context.Context, event *EventEnvelope) error <span class="cov8" title="1">{
         volumeID := event.EntityID
-        if volumeID == "" </span><span class="cov0" title="0">{
+        if volumeID == "" </span><span class="cov8" title="1">{
                 return fmt.Errorf("volume.updated event %s has no entity_id", event.EventID)
         }</span>
         <span class="cov0" title="0">title, _ := event.Data["title"].(string)
@@ -2183,33 +2232,99 @@ func (h *VolumeEventHandler) HandleVolumeUpdated(ctx context.Context, event *Eve
                 return nil
         }</span>
 
-        <span class="cov0" title="0">affected, err := data.UpdateLibraryEntryTitleByVolume(ctx, volumeID, title)
+        // All three refreshes run for every event. A failure in any of them returns an error so the
+        // event is Nak'ed and redelivered; each refresh is idempotent, so the retry is safe.
+        <span class="cov0" title="0">libUsers, err := data.UpdateLibraryEntryTitleByVolume(ctx, volumeID, title)
         if err != nil </span><span class="cov0" title="0">{
                 return fmt.Errorf("update library titles for volume %s: %w", volumeID, err)
         }</span>
+        <span class="cov0" title="0">tableUsers, err := data.UpdateTableVolumeTitleByVolume(ctx, volumeID, title)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("update table titles for volume %s: %w", volumeID, err)
+        }</span>
+        <span class="cov0" title="0">wishlistUsers, err := data.UpdateWishlistEntryTitleByVolume(ctx, volumeID, title)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("update wishlist titles for volume %s: %w", volumeID, err)
+        }</span>
 
-        <span class="cov0" title="0">h.invalidateLibraryCache(affected)
+        <span class="cov0" title="0">affected := union(libUsers, tableUsers, wishlistUsers)
+        h.invalidate(ctx, affected, volumeID)
         logging.Logger.Info("volume title synced",
                 "event_id", event.EventID, "volume_id", volumeID, "users", len(affected))
         return nil</span>
 }
 
-// invalidateLibraryCache drops the cached library-list page for each user whose entries changed,
-// so their next read reflects the new title. gin-contrib/cache keys the library GET by its URL.
-func (h *VolumeEventHandler) invalidateLibraryCache(userIDs []string) <span class="cov0" title="0">{
+// invalidate drops every affected user's cached library, table, and wishlist pages - the list
+// pages unconditionally (their URLs derive from the user ID alone) and the detail pages for
+// whichever of their tables/wishlists actually reference the changed volume. gin-contrib/cache
+// keys a GET by its URL.
+func (h *VolumeEventHandler) invalidate(ctx context.Context, userIDs []string, volumeID string) <span class="cov0" title="0">{
         if h.cache == nil </span><span class="cov0" title="0">{
                 return
         }</span>
         <span class="cov0" title="0">for _, uid := range userIDs </span><span class="cov0" title="0">{
-                key := cache.CreateKey("/users/" + uid + "/library")
-                if err := h.cache.Delete(key); err != nil &amp;&amp; !errors.Is(err, persistence.ErrCacheMiss) </span><span class="cov0" title="0">{
-                        logging.Logger.Warn("library cache invalidation failed", "user_id", uid, "error", err)
+                base := "/users/" + uid
+                h.drop(uid, cache.CreateKey(base+"/library"))
+                h.drop(uid, cache.CreateKey(base+"/tables"))
+                h.drop(uid, cache.CreateKey(base+"/wishlists"))
+
+                if tables, err := data.ListTablesByUser(ctx, uid); err != nil </span><span class="cov0" title="0">{
+                        logging.Logger.Warn("table detail cache invalidation lookup failed", "user_id", uid, "error", err)
+                }</span> else<span class="cov0" title="0"> {
+                        for _, t := range tables </span><span class="cov0" title="0">{
+                                if contains(t.VolumeIDs, volumeID) </span><span class="cov0" title="0">{
+                                        h.drop(uid, cache.CreateKey(base+"/tables/"+t.ID))
+                                }</span>
+                        }
+                }
+
+                <span class="cov0" title="0">if wls, err := data.ListWishlistsByUser(ctx, uid); err != nil </span><span class="cov0" title="0">{
+                        logging.Logger.Warn("wishlist detail cache invalidation lookup failed", "user_id", uid, "error", err)
+                }</span> else<span class="cov0" title="0"> {
+                        for _, wl := range wls </span><span class="cov0" title="0">{
+                                for _, e := range wl.Entries </span><span class="cov0" title="0">{
+                                        if e.VolumeID == volumeID </span><span class="cov0" title="0">{
+                                                h.drop(uid, cache.CreateKey(base+"/wishlists/"+wl.ID))
+                                                break</span>
+                                        }
+                                }
+                        }
+                }
+        }
+}
+
+func (h *VolumeEventHandler) drop(userID, key string) <span class="cov0" title="0">{
+        if err := h.cache.Delete(key); err != nil &amp;&amp; !errors.Is(err, persistence.ErrCacheMiss) </span><span class="cov0" title="0">{
+                logging.Logger.Warn("cache invalidation failed", "user_id", userID, "key", key, "error", err)
+        }</span>
+}
+
+func union(lists ...[]string) []string <span class="cov0" title="0">{
+        seen := map[string]struct{}{}
+        out := make([]string, 0)
+        for _, l := range lists </span><span class="cov0" title="0">{
+                for _, s := range l </span><span class="cov0" title="0">{
+                        if _, ok := seen[s]; ok </span><span class="cov0" title="0">{
+                                continue</span>
+                        }
+                        <span class="cov0" title="0">seen[s] = struct{}{}
+                        out = append(out, s)</span>
+                }
+        }
+        <span class="cov0" title="0">return out</span>
+}
+
+func contains(haystack []string, needle string) bool <span class="cov0" title="0">{
+        for _, s := range haystack </span><span class="cov0" title="0">{
+                if s == needle </span><span class="cov0" title="0">{
+                        return true
                 }</span>
         }
+        <span class="cov0" title="0">return false</span>
 }
 </pre>
 		
-		<pre class="file" id="file9" style="display: none">// Package ratelimit implements a Redis-backed, per-client, per-route-tier request rate
+		<pre class="file" id="file10" style="display: none">// Package ratelimit implements a Redis-backed, per-client, per-route-tier request rate
 // limiter. Counters live in Redis (INCR + EXPIRE) rather than per-pod memory, so the limit is
 // consistent across catalog-api's replicas instead of being N times looser depending on how
 // many pods happen to be up.
@@ -2282,7 +2397,7 @@ func Ping(ctx context.Context, pool *redis.Pool) error <span class="cov3" title=
 }
 </pre>
 		
-		<pre class="file" id="file10" style="display: none">// Package readiness tracks the reachability of backend dependencies (beyond Mongo, which
+		<pre class="file" id="file11" style="display: none">// Package readiness tracks the reachability of backend dependencies (beyond Mongo, which
 // api-core.go's HealthHandler already covers) so /status/health can fail loud instead of the
 // service silently degrading to an uncached or unlimited mode.
 package readiness
@@ -2316,7 +2431,7 @@ func CacheReady(ctx context.Context) bool <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file11" style="display: none">package server
+		<pre class="file" id="file12" style="display: none">package server
 
 import (
         "net/http"
@@ -2327,9 +2442,8 @@ import (
         "github.com/sweetrpg/game-room-objects.go/models"
 )
 
-// volumeEntryRequest is shared by the library, wishlist, and table add-entry endpoints. The
-// library endpoint also captures volume_title as a denormalized snapshot for display; the others
-// ignore it.
+// volumeEntryRequest is shared by the library, wishlist, and table add-entry endpoints. All
+// three capture volume_title as a denormalized snapshot for display without a catalog lookup.
 type volumeEntryRequest struct {
         VolumeID    string `json:"volume_id"`
         VolumeTitle string `json:"volume_title"`
@@ -2380,7 +2494,7 @@ func internalError(c *gin.Context, err error) <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file12" style="display: none">package server
+		<pre class="file" id="file13" style="display: none">package server
 
 import (
         "github.com/gin-contrib/cache/persistence"
@@ -2397,7 +2511,7 @@ func SetupHandlers(g *gin.Engine, cache persistence.CacheStore, ttls cachettl.Co
 }</span>
 </pre>
 		
-		<pre class="file" id="file13" style="display: none">package server
+		<pre class="file" id="file14" style="display: none">package server
 
 import (
         "errors"
@@ -2630,7 +2744,7 @@ func previewLibraryDefaultVisibility(c *gin.Context) <span class="cov0" title="0
 }
 </pre>
 		
-		<pre class="file" id="file14" style="display: none">package server
+		<pre class="file" id="file15" style="display: none">package server
 
 import (
         "net/http"
@@ -2684,7 +2798,7 @@ func pingHandler(c *gin.Context) <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file15" style="display: none">package server
+		<pre class="file" id="file16" style="display: none">package server
 
 import (
         "net/http"
@@ -2887,7 +3001,7 @@ func addTableVolume(c *gin.Context) <span class="cov0" title="0">{
                 c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
                 return
         }</span>
-        <span class="cov0" title="0">tbl, err := data.AddTableVolume(c.Request.Context(), c.Param("id"), c.Param("user_id"), req.VolumeID, authz.Viewer(c))
+        <span class="cov0" title="0">tbl, err := data.AddTableVolume(c.Request.Context(), c.Param("id"), c.Param("user_id"), req.VolumeID, req.VolumeTitle, authz.Viewer(c))
         if err != nil </span><span class="cov0" title="0">{
                 internalError(c, err)
                 return
@@ -2955,7 +3069,7 @@ func setTableVisibility(c *gin.Context) <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file16" style="display: none">package server
+		<pre class="file" id="file17" style="display: none">package server
 
 import (
         "net/http"
@@ -3126,7 +3240,7 @@ func addWishlistEntry(c *gin.Context) <span class="cov0" title="0">{
                 c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
                 return
         }</span>
-        <span class="cov0" title="0">wl, err := data.AddWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), req.VolumeID, authz.Viewer(c))
+        <span class="cov0" title="0">wl, err := data.AddWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), req.VolumeID, req.VolumeTitle, authz.Viewer(c))
         if err != nil </span><span class="cov0" title="0">{
                 internalError(c, err)
                 return
