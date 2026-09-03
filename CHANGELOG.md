@@ -1,4 +1,11 @@
 
+## 0.10.0 - 2026-09-03
+
+### Added
+- Sync volume titles to tables and wishlists on volume.updated
+
+
+
 ## 0.9.0 - 2026-09-02
 
 ### Added
