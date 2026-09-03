@@ -169,7 +169,7 @@ func addWishlistEntry(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
 		return
 	}
-	wl, err := data.AddWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), req.VolumeID, authz.Viewer(c))
+	wl, err := data.AddWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), req.VolumeID, req.VolumeTitle, authz.Viewer(c))
 	if err != nil {
 		internalError(c, err)
 		return
