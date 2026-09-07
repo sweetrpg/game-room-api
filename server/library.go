@@ -8,7 +8,7 @@ import (
 	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-gonic/gin"
 	apiv "github.com/sweetrpg/api-core.go/vo"
-	"github.com/sweetrpg/game-room-api/authz"
+	"github.com/sweetrpg/authz-client.go/authz"
 	"github.com/sweetrpg/game-room-api/cachettl"
 	"github.com/sweetrpg/game-room-data.go/data"
 	"github.com/sweetrpg/game-room-objects.go/models"
@@ -16,7 +16,7 @@ import (
 
 func setupLibraryHandlers(g *gin.Engine, store persistence.CacheStore, ttls cachettl.Config, authzClient *authz.Client) {
 	ttl := ttls.TTL("library")
-	viewer := authz.ResolveViewer(authzClient)
+	viewer := authz.ResolveViewer(authzClient, "game-room-api")
 	owner := authz.RequireOwner()
 
 	g.GET("/users/:user_id/library", viewer, cache.CachePage(store, ttl, getLibrary))
