@@ -3,7 +3,7 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-		<title>authz: Go Coverage Report</title>
+		<title>cachettl: Go Coverage Report</title>
 		<style>
 			body {
 				background: black;
@@ -55,41 +55,37 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">github.com/sweetrpg/game-room-api/authz/client.go (36.2%)</option>
+				<option value="file0">github.com/sweetrpg/game-room-api/cachettl/cachettl.go (100.0%)</option>
 				
-				<option value="file1">github.com/sweetrpg/game-room-api/authz/middleware.go (0.0%)</option>
+				<option value="file1">github.com/sweetrpg/game-room-api/cmd/consumer/main.go (0.0%)</option>
 				
-				<option value="file2">github.com/sweetrpg/game-room-api/cachettl/cachettl.go (100.0%)</option>
+				<option value="file2">github.com/sweetrpg/game-room-api/cmd/game-room-api/main.go (0.0%)</option>
 				
-				<option value="file3">github.com/sweetrpg/game-room-api/cmd/consumer/main.go (0.0%)</option>
+				<option value="file3">github.com/sweetrpg/game-room-api/cmd/migrate-table-volume-titles/main.go (0.0%)</option>
 				
-				<option value="file4">github.com/sweetrpg/game-room-api/cmd/game-room-api/main.go (0.0%)</option>
+				<option value="file4">github.com/sweetrpg/game-room-api/cmd/migrate-wishlist-names/main.go (0.0%)</option>
 				
-				<option value="file5">github.com/sweetrpg/game-room-api/cmd/migrate-table-volume-titles/main.go (0.0%)</option>
+				<option value="file5">github.com/sweetrpg/game-room-api/docs/docs.go (0.0%)</option>
 				
-				<option value="file6">github.com/sweetrpg/game-room-api/cmd/migrate-wishlist-names/main.go (0.0%)</option>
+				<option value="file6">github.com/sweetrpg/game-room-api/internal/consumer/consumer.go (75.0%)</option>
 				
-				<option value="file7">github.com/sweetrpg/game-room-api/docs/docs.go (0.0%)</option>
+				<option value="file7">github.com/sweetrpg/game-room-api/internal/consumer/handler.go (7.3%)</option>
 				
-				<option value="file8">github.com/sweetrpg/game-room-api/internal/consumer/consumer.go (75.0%)</option>
+				<option value="file8">github.com/sweetrpg/game-room-api/ratelimit/ratelimit.go (91.7%)</option>
 				
-				<option value="file9">github.com/sweetrpg/game-room-api/internal/consumer/handler.go (7.3%)</option>
+				<option value="file9">github.com/sweetrpg/game-room-api/readiness/readiness.go (0.0%)</option>
 				
-				<option value="file10">github.com/sweetrpg/game-room-api/ratelimit/ratelimit.go (91.7%)</option>
+				<option value="file10">github.com/sweetrpg/game-room-api/server/common.go (0.0%)</option>
 				
-				<option value="file11">github.com/sweetrpg/game-room-api/readiness/readiness.go (0.0%)</option>
+				<option value="file11">github.com/sweetrpg/game-room-api/server/handlers.go (0.0%)</option>
 				
-				<option value="file12">github.com/sweetrpg/game-room-api/server/common.go (0.0%)</option>
+				<option value="file12">github.com/sweetrpg/game-room-api/server/library.go (0.0%)</option>
 				
-				<option value="file13">github.com/sweetrpg/game-room-api/server/handlers.go (0.0%)</option>
+				<option value="file13">github.com/sweetrpg/game-room-api/server/status.go (0.0%)</option>
 				
-				<option value="file14">github.com/sweetrpg/game-room-api/server/library.go (0.0%)</option>
+				<option value="file14">github.com/sweetrpg/game-room-api/server/table.go (0.0%)</option>
 				
-				<option value="file15">github.com/sweetrpg/game-room-api/server/status.go (0.0%)</option>
-				
-				<option value="file16">github.com/sweetrpg/game-room-api/server/table.go (0.0%)</option>
-				
-				<option value="file17">github.com/sweetrpg/game-room-api/server/wishlist.go (0.0%)</option>
+				<option value="file15">github.com/sweetrpg/game-room-api/server/wishlist.go (0.0%)</option>
 				
 				</select>
 			</div>
@@ -112,220 +108,7 @@
 		</div>
 		<div id="content">
 		
-		<pre class="file" id="file0" style="display: none">// Package authz calls auth-api's POST /authz/check to resolve a caller's identity (subject).
-// Unlike catalog-api's role-gated authz, Game Room endpoints aren't role-based - every user manages
-// their own library/wishlist/tables, and other users' collections are filtered by visibility
-// rather than by role. This package only ever needs the caller's subject, and treats a missing
-// or invalid token as an anonymous viewer rather than an error, since most Game Room reads are
-// legitimately anonymous-accessible (anything public).
-package authz
-
-import (
-        "bytes"
-        "context"
-        "encoding/json"
-        "fmt"
-        "net/http"
-        "time"
-
-        "github.com/sweetrpg/common.go/logging"
-)
-
-// CheckResponse is the union of auth-api's allowed/denied /authz/check response shapes.
-type CheckResponse struct {
-        Allowed bool     `json:"allowed"`
-        Roles   []string `json:"roles"`
-        Sub     string   `json:"sub"`
-        Reason  string   `json:"reason"`
-}
-
-// InvalidTokenError means auth-api rejected the bearer token itself.
-type InvalidTokenError struct{}
-
-func (InvalidTokenError) Error() string <span class="cov0" title="0">{ return "authz: invalid or missing token" }</span>
-
-// Client calls auth-api's /authz/check endpoint and users-api's /api/profile endpoint.
-type Client struct {
-        baseURL      string
-        usersBaseURL string
-        http         *http.Client
-}
-
-// NewClient builds a Client against auth-api's base URL and users-api's base URL. authBaseURL
-// drives identity verification (the subject); usersBaseURL resolves that subject to the
-// canonical users._id user ID. Either may be empty so the service can still start when the
-// corresponding URL env var isn't configured - a missing URL makes the relevant call fail,
-// which ResolveViewer treats as anonymous.
-func NewClient(authBaseURL, usersBaseURL string) *Client <span class="cov0" title="0">{
-        return &amp;Client{baseURL: authBaseURL, usersBaseURL: usersBaseURL, http: &amp;http.Client{Timeout: 5 * time.Second}}
-}</span>
-
-// profileResponse is the slice of users-api's /profile response game-room-api reads.
-type profileResponse struct {
-        UserID string `json:"user_id"`
-}
-
-// ResolveUserID exchanges a verified bearer token for the caller's canonical users._id user ID
-// by calling users-api's /profile. It returns "" when the token is missing, the user has no
-// provisioned profile (HTTP 404), or users-api is unavailable - all of which ResolveViewer
-// treats as an unprovisioned/anonymous viewer.
-func (c *Client) ResolveUserID(ctx context.Context, token string) string <span class="cov10" title="6">{
-        if c.usersBaseURL == "" || token == "" </span><span class="cov4" title="2">{
-                return ""
-        }</span>
-
-        <span class="cov7" title="4">req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.usersBaseURL+"/profile", nil)
-        if err != nil </span><span class="cov0" title="0">{
-                logging.Logger.Debug("users-api resolve: build request", "error", err.Error())
-                return ""
-        }</span>
-        <span class="cov7" title="4">req.Header.Set("Authorization", "Bearer "+token)
-
-        resp, err := c.http.Do(req)
-        if err != nil </span><span class="cov0" title="0">{
-                logging.Logger.Debug("users-api resolve: request failed", "error", err.Error())
-                return ""
-        }</span>
-        <span class="cov7" title="4">defer func() </span><span class="cov7" title="4">{ _ = resp.Body.Close() }</span>()
-
-        <span class="cov7" title="4">if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusUnauthorized </span><span class="cov4" title="2">{
-                return ""
-        }</span>
-        <span class="cov4" title="2">if resp.StatusCode != http.StatusOK </span><span class="cov1" title="1">{
-                logging.Logger.Debug("users-api resolve: unexpected status", "status", resp.StatusCode)
-                return ""
-        }</span>
-
-        <span class="cov1" title="1">var out profileResponse
-        if err := json.NewDecoder(resp.Body).Decode(&amp;out); err != nil </span><span class="cov0" title="0">{
-                logging.Logger.Debug("users-api resolve: decode response", "error", err.Error())
-                return ""
-        }</span>
-        <span class="cov1" title="1">return out.UserID</span>
-}
-
-// Check verifies token against auth-api and returns the caller's allowed/roles/subject.
-func (c *Client) Check(ctx context.Context, token, service string) (*CheckResponse, error) <span class="cov0" title="0">{
-        body, err := json.Marshal(map[string]string{"service": service})
-        if err != nil </span><span class="cov0" title="0">{
-                return nil, fmt.Errorf("authz: marshal request: %w", err)
-        }</span>
-
-        <span class="cov0" title="0">req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/authz/check", bytes.NewReader(body))
-        if err != nil </span><span class="cov0" title="0">{
-                return nil, fmt.Errorf("authz: build request: %w", err)
-        }</span>
-        <span class="cov0" title="0">req.Header.Set("Content-Type", "application/json")
-        req.Header.Set("Authorization", "Bearer "+token)
-
-        resp, err := c.http.Do(req)
-        if err != nil </span><span class="cov0" title="0">{
-                return nil, fmt.Errorf("authz: request failed: %w", err)
-        }</span>
-        <span class="cov0" title="0">defer func() </span><span class="cov0" title="0">{ _ = resp.Body.Close() }</span>()
-
-        <span class="cov0" title="0">if resp.StatusCode == http.StatusUnauthorized </span><span class="cov0" title="0">{
-                return nil, InvalidTokenError{}
-        }</span>
-        <span class="cov0" title="0">if resp.StatusCode != http.StatusOK </span><span class="cov0" title="0">{
-                return nil, fmt.Errorf("authz: unexpected status %d from auth-api", resp.StatusCode)
-        }</span>
-
-        <span class="cov0" title="0">var out CheckResponse
-        if err := json.NewDecoder(resp.Body).Decode(&amp;out); err != nil </span><span class="cov0" title="0">{
-                return nil, fmt.Errorf("authz: decode response: %w", err)
-        }</span>
-
-        <span class="cov0" title="0">logging.Logger.Debug("authz check", "allowed", out.Allowed, "sub", out.Sub)
-        return &amp;out, nil</span>
-}
-</pre>
-		
-		<pre class="file" id="file1" style="display: none">package authz
-
-import (
-        "net/http"
-
-        "github.com/gin-gonic/gin"
-        apiv "github.com/sweetrpg/api-core.go/vo"
-        "github.com/sweetrpg/common.go/logging"
-)
-
-const viewerContextKey = "authz.viewer"
-
-// ResolveViewer returns Gin middleware that resolves the caller's identity from a bearer token,
-// when present, and stashes it in the Gin context (read via Viewer(c)) for handlers to use in
-// visibility filtering and ownership checks. A missing token, one auth-api rejects, or a subject
-// with no provisioned user profile resolves to an anonymous viewer ("") rather than aborting the
-// request - reads must stay accessible to anonymous callers for anything public.
-//
-// The viewer identity stored in the context is the caller's canonical users._id user ID (the
-// value of user_id throughout Game Room after the migrate-game-room-user-ids cutover), not the
-// raw third-party subject. Resolving it requires a users-api round trip for authenticated
-// callers; an unresolvable subject yields "" so owner-scoped writes are rejected.
-func ResolveViewer(client *Client) gin.HandlerFunc <span class="cov0" title="0">{
-        return func(c *gin.Context) </span><span class="cov0" title="0">{
-                token := bearerToken(c)
-                if token == "" </span><span class="cov0" title="0">{
-                        c.Set(viewerContextKey, "")
-                        c.Next()
-                        return
-                }</span>
-
-                <span class="cov0" title="0">result, err := client.Check(c.Request.Context(), token, "game-room-api")
-                if err != nil </span><span class="cov0" title="0">{
-                        logging.Logger.Debug("authz check failed, treating caller as anonymous", "error", err.Error())
-                        c.Set(viewerContextKey, "")
-                        c.Next()
-                        return
-                }</span>
-
-                <span class="cov0" title="0">userID := client.ResolveUserID(c.Request.Context(), token)
-                if userID == "" </span><span class="cov0" title="0">{
-                        logging.Logger.Debug("subject has no provisioned user, treating caller as anonymous", "sub", result.Sub)
-                }</span>
-                <span class="cov0" title="0">c.Set(viewerContextKey, userID)
-                c.Next()</span>
-        }
-}
-
-// Viewer returns the caller's canonical users._id user ID, or "" for an anonymous viewer.
-func Viewer(c *gin.Context) string <span class="cov0" title="0">{
-        if v, ok := c.Get(viewerContextKey); ok </span><span class="cov0" title="0">{
-                if sub, ok := v.(string); ok </span><span class="cov0" title="0">{
-                        return sub
-                }</span>
-        }
-        <span class="cov0" title="0">return ""</span>
-}
-
-// RequireOwner aborts with 403 unless the resolved viewer matches the :user_id path param -
-// every Game Room write endpoint is scoped to the caller's own collection.
-func RequireOwner() gin.HandlerFunc <span class="cov0" title="0">{
-        return func(c *gin.Context) </span><span class="cov0" title="0">{
-                viewer := Viewer(c)
-                if viewer == "" || viewer != c.Param("user_id") </span><span class="cov0" title="0">{
-                        c.AbortWithStatusJSON(http.StatusForbidden, apiv.ErrorVO{
-                                Error:   "forbidden",
-                                Message: "Caller does not own this resource",
-                        })
-                        return
-                }</span>
-                <span class="cov0" title="0">c.Next()</span>
-        }
-}
-
-func bearerToken(c *gin.Context) string <span class="cov0" title="0">{
-        const prefix = "Bearer "
-        auth := c.GetHeader("Authorization")
-        if len(auth) &lt;= len(prefix) || auth[:len(prefix)] != prefix </span><span class="cov0" title="0">{
-                return ""
-        }</span>
-        <span class="cov0" title="0">return auth[len(prefix):]</span>
-}
-</pre>
-		
-		<pre class="file" id="file2" style="display: none">// Package cachettl resolves the cache TTL for a given route group, loaded once at startup
+		<pre class="file" id="file0" style="display: none">// Package cachettl resolves the cache TTL for a given route group, loaded once at startup
 // from the CACHE_TTLS env var so slower-changing entities and faster-changing ones aren't
 // forced onto the same cache policy.
 package cachettl
@@ -396,7 +179,7 @@ func (c Config) TTL(route string) time.Duration <span class="cov9" title="8">{
 }
 </pre>
 		
-		<pre class="file" id="file3" style="display: none">package main
+		<pre class="file" id="file1" style="display: none">package main
 
 import (
         "context"
@@ -447,7 +230,7 @@ func main() <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file4" style="display: none">package main
+		<pre class="file" id="file2" style="display: none">package main
 
 import (
         "context"
@@ -476,9 +259,9 @@ import (
         "github.com/sweetrpg/api-core.go/featureflags"
         "github.com/sweetrpg/api-core.go/tracing"
         "github.com/sweetrpg/api-core.go/vo"
+        "github.com/sweetrpg/authz-client.go/authz"
         "github.com/sweetrpg/common.go/logging"
         "github.com/sweetrpg/common.go/util"
-        "github.com/sweetrpg/game-room-api/authz"
         "github.com/sweetrpg/game-room-api/cachettl"
         "github.com/sweetrpg/game-room-api/constants"
         "github.com/sweetrpg/game-room-api/docs"
@@ -884,7 +667,7 @@ func globalRateLimiter() gin.HandlerFunc <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file5" style="display: none">// migrate-table-volume-titles runs the one-time structural migration that ensures every table
+		<pre class="file" id="file3" style="display: none">// migrate-table-volume-titles runs the one-time structural migration that ensures every table
 // document has a volume_titles object, setting it to an empty object on tables stored before
 // the denormalized-title sidecar existed.
 //
@@ -930,7 +713,7 @@ func main() <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file6" style="display: none">// migrate-wishlist-names runs the one-time migration that backfills the default
+		<pre class="file" id="file4" style="display: none">// migrate-wishlist-names runs the one-time migration that backfills the default
 // wishlist name onto documents stored before the multi-wishlist cutover.
 //
 // Safe to run more than once: data.MigrateWishlistNames leaves already-named
@@ -976,7 +759,7 @@ func main() <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file7" style="display: none">// Package docs Code generated by swaggo/swag. DO NOT EDIT
+		<pre class="file" id="file5" style="display: none">// Package docs Code generated by swaggo/swag. DO NOT EDIT
 package docs
 
 import "github.com/swaggo/swag"
@@ -2057,7 +1840,7 @@ func init() <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file8" style="display: none">package consumer
+		<pre class="file" id="file6" style="display: none">package consumer
 
 import (
         "context"
@@ -2196,7 +1979,7 @@ func (c *Consumer) process(ctx context.Context, msg jetstream.Msg) <span class="
 }
 </pre>
 		
-		<pre class="file" id="file9" style="display: none">package consumer
+		<pre class="file" id="file7" style="display: none">package consumer
 
 import (
         "context"
@@ -2324,7 +2107,7 @@ func contains(haystack []string, needle string) bool <span class="cov0" title="0
 }
 </pre>
 		
-		<pre class="file" id="file10" style="display: none">// Package ratelimit implements a Redis-backed, per-client, per-route-tier request rate
+		<pre class="file" id="file8" style="display: none">// Package ratelimit implements a Redis-backed, per-client, per-route-tier request rate
 // limiter. Counters live in Redis (INCR + EXPIRE) rather than per-pod memory, so the limit is
 // consistent across catalog-api's replicas instead of being N times looser depending on how
 // many pods happen to be up.
@@ -2397,7 +2180,7 @@ func Ping(ctx context.Context, pool *redis.Pool) error <span class="cov3" title=
 }
 </pre>
 		
-		<pre class="file" id="file11" style="display: none">// Package readiness tracks the reachability of backend dependencies (beyond Mongo, which
+		<pre class="file" id="file9" style="display: none">// Package readiness tracks the reachability of backend dependencies (beyond Mongo, which
 // api-core.go's HealthHandler already covers) so /status/health can fail loud instead of the
 // service silently degrading to an uncached or unlimited mode.
 package readiness
@@ -2431,7 +2214,7 @@ func CacheReady(ctx context.Context) bool <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file12" style="display: none">package server
+		<pre class="file" id="file10" style="display: none">package server
 
 import (
         "net/http"
@@ -2494,12 +2277,12 @@ func internalError(c *gin.Context, err error) <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file13" style="display: none">package server
+		<pre class="file" id="file11" style="display: none">package server
 
 import (
         "github.com/gin-contrib/cache/persistence"
         "github.com/gin-gonic/gin"
-        "github.com/sweetrpg/game-room-api/authz"
+        "github.com/sweetrpg/authz-client.go/authz"
         "github.com/sweetrpg/game-room-api/cachettl"
 )
 
@@ -2511,7 +2294,7 @@ func SetupHandlers(g *gin.Engine, cache persistence.CacheStore, ttls cachettl.Co
 }</span>
 </pre>
 		
-		<pre class="file" id="file14" style="display: none">package server
+		<pre class="file" id="file12" style="display: none">package server
 
 import (
         "errors"
@@ -2521,7 +2304,7 @@ import (
         "github.com/gin-contrib/cache/persistence"
         "github.com/gin-gonic/gin"
         apiv "github.com/sweetrpg/api-core.go/vo"
-        "github.com/sweetrpg/game-room-api/authz"
+        "github.com/sweetrpg/authz-client.go/authz"
         "github.com/sweetrpg/game-room-api/cachettl"
         "github.com/sweetrpg/game-room-data.go/data"
         "github.com/sweetrpg/game-room-objects.go/models"
@@ -2529,7 +2312,7 @@ import (
 
 func setupLibraryHandlers(g *gin.Engine, store persistence.CacheStore, ttls cachettl.Config, authzClient *authz.Client) <span class="cov0" title="0">{
         ttl := ttls.TTL("library")
-        viewer := authz.ResolveViewer(authzClient)
+        viewer := authz.ResolveViewer(authzClient, "game-room-api")
         owner := authz.RequireOwner()
 
         g.GET("/users/:user_id/library", viewer, cache.CachePage(store, ttl, getLibrary))
@@ -2744,7 +2527,7 @@ func previewLibraryDefaultVisibility(c *gin.Context) <span class="cov0" title="0
 }
 </pre>
 		
-		<pre class="file" id="file15" style="display: none">package server
+		<pre class="file" id="file13" style="display: none">package server
 
 import (
         "net/http"
@@ -2798,7 +2581,7 @@ func pingHandler(c *gin.Context) <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file16" style="display: none">package server
+		<pre class="file" id="file14" style="display: none">package server
 
 import (
         "net/http"
@@ -2807,7 +2590,7 @@ import (
         "github.com/gin-contrib/cache/persistence"
         "github.com/gin-gonic/gin"
         apiv "github.com/sweetrpg/api-core.go/vo"
-        "github.com/sweetrpg/game-room-api/authz"
+        "github.com/sweetrpg/authz-client.go/authz"
         "github.com/sweetrpg/game-room-api/cachettl"
         "github.com/sweetrpg/game-room-data.go/data"
 )
@@ -2833,7 +2616,7 @@ func tableWriteFailure(c *gin.Context) <span class="cov0" title="0">{
 
 func setupTableHandlers(g *gin.Engine, store persistence.CacheStore, ttls cachettl.Config, authzClient *authz.Client) <span class="cov0" title="0">{
         ttl := ttls.TTL("tables")
-        viewer := authz.ResolveViewer(authzClient)
+        viewer := authz.ResolveViewer(authzClient, "game-room-api")
         owner := authz.RequireOwner()
 
         g.GET("/users/:user_id/tables", viewer, cache.CachePage(store, ttl, listTables))
@@ -3069,7 +2852,7 @@ func setTableVisibility(c *gin.Context) <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file17" style="display: none">package server
+		<pre class="file" id="file15" style="display: none">package server
 
 import (
         "net/http"
@@ -3078,7 +2861,7 @@ import (
         "github.com/gin-contrib/cache/persistence"
         "github.com/gin-gonic/gin"
         apiv "github.com/sweetrpg/api-core.go/vo"
-        "github.com/sweetrpg/game-room-api/authz"
+        "github.com/sweetrpg/authz-client.go/authz"
         "github.com/sweetrpg/game-room-api/cachettl"
         "github.com/sweetrpg/game-room-data.go/data"
 )
@@ -3104,7 +2887,7 @@ func wishlistWriteFailure(c *gin.Context) <span class="cov0" title="0">{
 
 func setupWishlistHandlers(g *gin.Engine, store persistence.CacheStore, ttls cachettl.Config, authzClient *authz.Client) <span class="cov0" title="0">{
         ttl := ttls.TTL("wishlist")
-        viewer := authz.ResolveViewer(authzClient)
+        viewer := authz.ResolveViewer(authzClient, "game-room-api")
         owner := authz.RequireOwner()
 
         g.GET("/users/:user_id/wishlists", viewer, cache.CachePage(store, ttl, listWishlists))
