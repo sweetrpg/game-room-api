@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-gonic/gin"
-	"github.com/sweetrpg/game-room-api/authz"
+	"github.com/sweetrpg/authz-client.go/authz"
 	"github.com/sweetrpg/game-room-api/cachettl"
 )
 
