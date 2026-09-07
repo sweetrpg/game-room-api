@@ -1,4 +1,11 @@
 
+## 0.10.1 - 2026-09-07
+
+### Changed
+- Use shared authz-client.go library
+
+
+
 ## 0.10.0 - 2026-09-03
 
 ### Added
