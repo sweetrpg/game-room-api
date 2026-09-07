@@ -7,7 +7,7 @@ import (
 	"github.com/gin-contrib/cache/persistence"
 	"github.com/gin-gonic/gin"
 	apiv "github.com/sweetrpg/api-core.go/vo"
-	"github.com/sweetrpg/game-room-api/authz"
+	"github.com/sweetrpg/authz-client.go/authz"
 	"github.com/sweetrpg/game-room-api/cachettl"
 	"github.com/sweetrpg/game-room-data.go/data"
 )
@@ -33,7 +33,7 @@ func wishlistWriteFailure(c *gin.Context) {
 
 func setupWishlistHandlers(g *gin.Engine, store persistence.CacheStore, ttls cachettl.Config, authzClient *authz.Client) {
 	ttl := ttls.TTL("wishlist")
-	viewer := authz.ResolveViewer(authzClient)
+	viewer := authz.ResolveViewer(authzClient, "game-room-api")
 	owner := authz.RequireOwner()
 
 	g.GET("/users/:user_id/wishlists", viewer, cache.CachePage(store, ttl, listWishlists))
