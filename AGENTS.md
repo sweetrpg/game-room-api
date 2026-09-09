@@ -11,6 +11,15 @@ to match the platform's Go microservice baseline. A thin Gin-based layer: `serve
 JSON:API routes to `game-room-data.go`'s data-access functions. Dependencies: api-core.go,
 game-room-data.go, game-room-objects.go, common.go, mongodb.go.
 
+## Rate limiting
+
+Per-client/IP rate limiting is on by default via the shared `api-core.go/ratelimit` middleware:
+Redis-backed counters keyed by `X-API-Key` else client IP, `cheap` tier for `/status/*` and
+`standard` for everything else, fail-closed 503 when Redis is unreachable, 429 on exceed. Tune
+with `RATE_LIMIT_CHEAP`/`RATE_LIMIT_CHEAP_WINDOW_SECONDS`/`RATE_LIMIT_STANDARD`/
+`RATE_LIMIT_STANDARD_WINDOW_SECONDS`. See `platform`'s
+`openspec/changes/fix-rate-limiting-per-client-ip`.
+
 ## Committing Code
 
 Use [Conventional Commits](https://www.conventionalcommits.org/):

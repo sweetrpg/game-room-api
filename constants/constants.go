@@ -12,14 +12,6 @@ const (
 	CACHE_TTLS        = "CACHE_TTLS"
 	CACHE_DEFAULT_TTL = "CACHE_DEFAULT_TTL"
 
-	// DISTRIBUTED_RATE_LIMIT_ENABLED toggles the Redis-backed per-client limiter on in
-	// place of the process-wide golang.org/x/time/rate limiter. Requires REDIS_HOST.
-	DISTRIBUTED_RATE_LIMIT_ENABLED = "DISTRIBUTED_RATE_LIMIT_ENABLED"
-	RATE_LIMIT_CHEAP               = "RATE_LIMIT_CHEAP"
-	RATE_LIMIT_CHEAP_WINDOW        = "RATE_LIMIT_CHEAP_WINDOW_SECONDS"
-	RATE_LIMIT_STANDARD            = "RATE_LIMIT_STANDARD"
-	RATE_LIMIT_STANDARD_WINDOW     = "RATE_LIMIT_STANDARD_WINDOW_SECONDS"
-
 	// AUTH_API_URL points at auth-api's base URL, used to verify bearer tokens and resolve
 	// the caller's subject (user ID) via POST /authz/check.
 	AUTH_API_URL = "AUTH_API_URL"
@@ -37,6 +29,5 @@ const (
 	// api-core.go/featureflags.
 	ProfilingEnabledFlag = "profiling-enabled"
 
-	ErrorRateLimitUnavailable = "rate_limit_unavailable"
-	ErrorForbidden            = "forbidden"
+	ErrorForbidden = "forbidden"
 )
