@@ -19,11 +19,17 @@ data:
   PYROSCOPE_SERVER_ADDRESS: http://pyroscope.observability.svc.cluster.local:4040
   PYROSCOPE_TENANT_ID: psw
   SENTRY_RELEASE: "1"
-  # No dedicated cache instance for Game Room yet (see secrets.yaml's game-room-api-cache comment) -
-  # REDIS_HOST deliberately unset until support/infrastructure provisions one. The service falls
-  # back to its in-memory cache store, a fully supported mode.
+  # Namespace cache Service (support/infrastructure game-room/cache, clusters/dev/game-room/cache.yaml).
+  # Backs the response cache and the distributed rate-limit counters.
+  REDIS_HOST: cache.sweetrpg-game-room.svc.cluster.local
+  REDIS_PORT: "6379"
   CACHE_TTLS: "library=30m,wishlist=30m,tables=15m"
   CACHE_DEFAULT_TTL: 1h
+  # Per-client/IP rate limiting (platform rate-limiting capability, #106). api-core defaults.
+  RATE_LIMIT_CHEAP: "120"
+  RATE_LIMIT_CHEAP_WINDOW_SECONDS: "60"
+  RATE_LIMIT_STANDARD: "30"
+  RATE_LIMIT_STANDARD_WINDOW_SECONDS: "60"
   INGRESS_BASE_PATH: /api/0/game-room
   INGRESS_HOST: dev.sweetrpg.com
   INGRESS_SCHEMES: http,https
