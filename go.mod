@@ -19,7 +19,7 @@ require (
 	github.com/swaggo/gin-swagger v1.6.1
 	github.com/swaggo/swag v1.16.6
 	github.com/sweetrpg/api-core.go v0.3.1
-	github.com/sweetrpg/authz-client.go v0.1.0
+	github.com/sweetrpg/authz-client.go v0.2.0
 	github.com/sweetrpg/common.go v0.0.16
 	github.com/sweetrpg/game-room-data.go v0.6.0
 	github.com/sweetrpg/game-room-objects.go v0.3.0
