@@ -1,4 +1,13 @@
 definitions:
+  server.createLoanRequest:
+    properties:
+      borrower_name:
+        type: string
+      borrower_user_id:
+        type: string
+      volume_id:
+        type: string
+    type: object
   server.createTableRequest:
     properties:
       name:
@@ -16,6 +25,11 @@ definitions:
           type: string
         type: array
     type: object
+  server.titleRequest:
+    properties:
+      title:
+        type: string
+    type: object
   server.visibilityRequest:
     properties:
       visibility:
@@ -24,6 +38,8 @@ definitions:
   server.volumeEntryRequest:
     properties:
       volume_id:
+        type: string
+      volume_title:
         type: string
     type: object
   vo.HealthResponseVO:
@@ -233,6 +249,46 @@ paths:
       summary: Remove library entry
       tags:
       - library
+  /users/{user_id}/library/entries/{volume_id}/title:
+    put:
+      consumes:
+      - application/json
+      description: Refresh the denormalized title snapshot on a single library entry.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Volume ID
+        in: path
+        name: volume_id
+        required: true
+        type: string
+      - description: New title
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/server.titleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Update library entry title
+      tags:
+      - library
   /users/{user_id}/library/entries/{volume_id}/visibility:
     put:
       consumes:
@@ -271,6 +327,145 @@ paths:
       summary: Set library entry visibility override
       tags:
       - library
+  /users/{user_id}/loans:
+    get:
+      description: List the volumes a user has lent out, both open and returned.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: List lent loans
+      tags:
+      - loans
+    post:
+      consumes:
+      - application/json
+      description: Lend a catalog volume to a platform-linked user or a free-form
+        name. Exactly one of borrower_user_id or borrower_name is required; when borrower_user_id
+        is given, borrower_name must also be supplied as that user's display name.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Loan details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/server.createLoanRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema: {}
+        "409":
+          description: Conflict
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Create loan
+      tags:
+      - loans
+  /users/{user_id}/loans/{loan_id}:
+    delete:
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Loan ID
+        in: path
+        name: loan_id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Delete loan
+      tags:
+      - loans
+  /users/{user_id}/loans/{loan_id}/return:
+    post:
+      description: Mark a lent-out loan as returned. Lender-only.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Loan ID
+        in: path
+        name: loan_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "403":
+          description: Forbidden
+          schema: {}
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Return loan
+      tags:
+      - loans
+  /users/{user_id}/loans/borrowed:
+    get:
+      description: List the volumes a platform-linked user has borrowed, both open
+        and returned.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: List borrowed loans
+      tags:
+      - loans
   /users/{user_id}/tables:
     get:
       description: List a user's tables, filtered to what the caller may see.

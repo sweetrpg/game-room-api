@@ -1,4 +1,17 @@
 
+## 0.12.0 - 2026-10-06
+
+### Added
+- Add lend/borrow/return/delete routes
+- Regenerate swagger docs; bump game-room-data.go
+
+
+### Fixed
+- Point cache ExternalSecret at the game-room cache Akeyless path
+- Point cache ExternalSecret at the game-room cache Akeyless path
+
+
+
 ## 0.11.0 - 2026-09-09
 
 ### Added
