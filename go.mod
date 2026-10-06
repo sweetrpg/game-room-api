@@ -5,7 +5,7 @@ go 1.26.5
 require (
 	github.com/getsentry/sentry-go v0.49.0
 	github.com/gin-contrib/cache v1.4.4
-	github.com/gin-contrib/cors v1.7.7
+	github.com/gin-contrib/cors v1.7.9
 	github.com/gin-gonic/gin v1.12.0
 	github.com/gomodule/redigo v1.9.3
 	github.com/grafana/pyroscope-go v1.4.2
@@ -125,7 +125,7 @@ require (
 	go.uber.org/zap v1.27.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	golang.org/x/arch v0.30.0 // indirect
-	golang.org/x/crypto v0.55.0 // indirect
+	golang.org/x/crypto v0.56.0 // indirect
 	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546 // indirect
 	golang.org/x/mod v0.38.0 // indirect
 	golang.org/x/net v0.58.0 // indirect
