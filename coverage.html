@@ -79,11 +79,13 @@
 				
 				<option value="file11">github.com/sweetrpg/game-room-api/server/library.go (0.0%)</option>
 				
-				<option value="file12">github.com/sweetrpg/game-room-api/server/status.go (0.0%)</option>
+				<option value="file12">github.com/sweetrpg/game-room-api/server/loan.go (0.0%)</option>
 				
-				<option value="file13">github.com/sweetrpg/game-room-api/server/table.go (0.0%)</option>
+				<option value="file13">github.com/sweetrpg/game-room-api/server/status.go (0.0%)</option>
 				
-				<option value="file14">github.com/sweetrpg/game-room-api/server/wishlist.go (0.0%)</option>
+				<option value="file14">github.com/sweetrpg/game-room-api/server/table.go (0.0%)</option>
+				
+				<option value="file15">github.com/sweetrpg/game-room-api/server/wishlist.go (0.0%)</option>
 				
 				</select>
 			</div>
@@ -945,6 +947,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/{user_id}/library/entries/{volume_id}/title": {
+            "put": {
+                "description": "Refresh the denormalized title snapshot on a single library entry.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "library"
+                ],
+                "summary": "Update library entry title",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Volume ID",
+                        "name": "volume_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New title",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.titleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {}
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
         "/users/{user_id}/library/entries/{volume_id}/visibility": {
             "put": {
                 "description": "Set (or clear, with an empty visibility) a per-entry visibility override.",
@@ -990,6 +1050,204 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/loans": {
+            "get": {
+                "description": "List the volumes a user has lent out, both open and returned.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "loans"
+                ],
+                "summary": "List lent loans",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            },
+            "post": {
+                "description": "Lend a catalog volume to a platform-linked user or a free-form name. Exactly one of borrower_user_id or borrower_name is required; when borrower_user_id is given, borrower_name must also be supplied as that user's display name.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "loans"
+                ],
+                "summary": "Create loan",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Loan details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.createLoanRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {}
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/loans/borrowed": {
+            "get": {
+                "description": "List the volumes a platform-linked user has borrowed, both open and returned.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "loans"
+                ],
+                "summary": "List borrowed loans",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/loans/{loan_id}": {
+            "delete": {
+                "tags": [
+                    "loans"
+                ],
+                "summary": "Delete loan",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Loan ID",
+                        "name": "loan_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/loans/{loan_id}/return": {
+            "post": {
+                "description": "Mark a lent-out loan as returned. Lender-only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "loans"
+                ],
+                "summary": "Return loan",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Loan ID",
+                        "name": "loan_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {}
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {}
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {}
                     },
                     "500": {
@@ -1648,6 +1906,20 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "server.createLoanRequest": {
+            "type": "object",
+            "properties": {
+                "borrower_name": {
+                    "type": "string"
+                },
+                "borrower_user_id": {
+                    "type": "string"
+                },
+                "volume_id": {
+                    "type": "string"
+                }
+            }
+        },
         "server.createTableRequest": {
             "type": "object",
             "properties": {
@@ -1675,6 +1947,14 @@ const docTemplate = `{
                 }
             }
         },
+        "server.titleRequest": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "server.visibilityRequest": {
             "type": "object",
             "properties": {
@@ -1687,6 +1967,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "volume_id": {
+                    "type": "string"
+                },
+                "volume_title": {
                     "type": "string"
                 }
             }
@@ -2127,6 +2410,7 @@ func SetupHandlers(g *gin.Engine, cache persistence.CacheStore, ttls cachettl.Co
         setupLibraryHandlers(g, cache, ttls, authzClient)
         setupWishlistHandlers(g, cache, ttls, authzClient)
         setupTableHandlers(g, cache, ttls, authzClient)
+        setupLoanHandlers(g, cache, ttls, authzClient)
         setupStatusHandlers(g)
 }</span>
 </pre>
@@ -2367,6 +2651,199 @@ func previewLibraryDefaultVisibility(c *gin.Context) <span class="cov0" title="0
 		<pre class="file" id="file12" style="display: none">package server
 
 import (
+        "errors"
+        "net/http"
+
+        "github.com/gin-contrib/cache"
+        "github.com/gin-contrib/cache/persistence"
+        "github.com/gin-gonic/gin"
+        apiv "github.com/sweetrpg/api-core.go/vo"
+        "github.com/sweetrpg/authz-client.go/authz"
+        "github.com/sweetrpg/game-room-api/cachettl"
+        "github.com/sweetrpg/game-room-data.go/data"
+)
+
+// createLoanRequest accepts exactly one of BorrowerUserID or BorrowerName; when BorrowerUserID is
+// given, BorrowerName must also be supplied (the caller already has the linked user's display
+// name from its own user search - see design.md's borrower resolution decision).
+type createLoanRequest struct {
+        VolumeID       string  `json:"volume_id"`
+        BorrowerUserID *string `json:"borrower_user_id"`
+        BorrowerName   string  `json:"borrower_name"`
+}
+
+// loanWriteFailure resolves a write's nil/false failure result into the right status: 403 if the
+// loan exists under a different lender, 404 if it doesn't exist at all.
+func loanWriteFailure(c *gin.Context) <span class="cov0" title="0">{
+        loan, err := data.GetLoan(c.Request.Context(), c.Param("loan_id"))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if loan != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusForbidden, apiv.ErrorVO{Error: "forbidden", Message: "Caller does not own this resource"})
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusNotFound, gin.H{})</span>
+}
+
+func setupLoanHandlers(g *gin.Engine, store persistence.CacheStore, ttls cachettl.Config, authzClient *authz.Client) <span class="cov0" title="0">{
+        ttl := ttls.TTL("loans")
+        viewer := authz.ResolveViewer(authzClient, "game-room-api")
+        owner := authz.RequireOwner()
+
+        g.GET("/users/:user_id/loans", viewer, owner, cache.CachePage(store, ttl, listLoansLent))
+        g.GET("/users/:user_id/loans/borrowed", viewer, owner, cache.CachePage(store, ttl, listLoansBorrowed))
+        g.POST("/users/:user_id/loans", viewer, owner, createLoan)
+        g.POST("/users/:user_id/loans/:loan_id/return", viewer, owner, returnLoan)
+        g.DELETE("/users/:user_id/loans/:loan_id", viewer, owner, deleteLoan)
+}</span>
+
+// List loans lent out by a user.
+//
+//        @Summary                List lent loans
+//        @Description        List the volumes a user has lent out, both open and returned.
+//        @Tags                        loans
+//        @Produce                json
+//        @Param                        user_id        path                string        true        "User ID"
+//        @Success                200                {object}        interface{}
+//        @Failure                500                {object}        interface{}
+//        @Router                        /users/{user_id}/loans [get]
+func listLoansLent(c *gin.Context) <span class="cov0" title="0">{
+        loans, err := data.ListLoansLentBy(c.Request.Context(), c.Param("user_id"))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">vos := make([]interface{}, 0, len(loans))
+        for _, l := range loans </span><span class="cov0" title="0">{
+                vos = append(vos, data.LoanToVO(l))
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, vos)</span>
+}
+
+// List loans borrowed by a user.
+//
+//        @Summary                List borrowed loans
+//        @Description        List the volumes a platform-linked user has borrowed, both open and returned.
+//        @Tags                        loans
+//        @Produce                json
+//        @Param                        user_id        path                string        true        "User ID"
+//        @Success                200                {object}        interface{}
+//        @Failure                500                {object}        interface{}
+//        @Router                        /users/{user_id}/loans/borrowed [get]
+func listLoansBorrowed(c *gin.Context) <span class="cov0" title="0">{
+        loans, err := data.ListLoansBorrowedBy(c.Request.Context(), c.Param("user_id"))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">vos := make([]interface{}, 0, len(loans))
+        for _, l := range loans </span><span class="cov0" title="0">{
+                vos = append(vos, data.LoanToVO(l))
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, vos)</span>
+}
+
+// Create a loan.
+//
+//        @Summary                Create loan
+//        @Description        Lend a catalog volume to a platform-linked user or a free-form name. Exactly one of borrower_user_id or borrower_name is required; when borrower_user_id is given, borrower_name must also be supplied as that user's display name.
+//        @Tags                        loans
+//        @Accept                        json
+//        @Produce                json
+//        @Param                        user_id        path                string                                true        "User ID"
+//        @Param                        body        body                createLoanRequest        true        "Loan details"
+//        @Success                200                {object}        interface{}
+//        @Failure                400                {object}        interface{}
+//        @Failure                409                {object}        interface{}
+//        @Failure                500                {object}        interface{}
+//        @Router                        /users/{user_id}/loans [post]
+func createLoan(c *gin.Context) <span class="cov0" title="0">{
+        var req createLoanRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil || req.VolumeID == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
+                return
+        }</span>
+        <span class="cov0" title="0">if (req.BorrowerUserID == nil || *req.BorrowerUserID == "") == (req.BorrowerName == "") </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "exactly one of borrower_user_id or borrower_name is required"})
+                return
+        }</span>
+        <span class="cov0" title="0">if req.BorrowerUserID != nil &amp;&amp; *req.BorrowerUserID != "" &amp;&amp; req.BorrowerName == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "borrower_name is required alongside borrower_user_id"})
+                return
+        }</span>
+
+        <span class="cov0" title="0">loan, err := data.CreateLoan(c.Request.Context(), c.Param("user_id"), req.VolumeID, req.BorrowerUserID, req.BorrowerName, authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                if errors.Is(err, data.ErrLoanBorrowerRequired) </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: err.Error()})
+                        return
+                }</span>
+                <span class="cov0" title="0">if errors.Is(err, data.ErrLoanAlreadyOpen) </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusConflict, apiv.ErrorVO{Error: "conflict", Message: err.Error()})
+                        return
+                }</span>
+                <span class="cov0" title="0">internalError(c, err)
+                return</span>
+        }
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.LoanToVO(loan))</span>
+}
+
+// Mark a loan returned.
+//
+//        @Summary                Return loan
+//        @Description        Mark a lent-out loan as returned. Lender-only.
+//        @Tags                        loans
+//        @Produce                json
+//        @Param                        user_id                path                string        true        "User ID"
+//        @Param                        loan_id                path                string        true        "Loan ID"
+//        @Success                200                        {object}        interface{}
+//        @Failure                403                        {object}        interface{}
+//        @Failure                404                        {object}        interface{}
+//        @Failure                500                        {object}        interface{}
+//        @Router                        /users/{user_id}/loans/{loan_id}/return [post]
+func returnLoan(c *gin.Context) <span class="cov0" title="0">{
+        loan, err := data.MarkLoanReturned(c.Request.Context(), c.Param("loan_id"), c.Param("user_id"), authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if loan == nil </span><span class="cov0" title="0">{
+                loanWriteFailure(c)
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.LoanToVO(loan))</span>
+}
+
+// Delete a loan.
+//
+//        @Summary                Delete loan
+//        @Tags                        loans
+//        @Param                        user_id                path        string        true        "User ID"
+//        @Param                        loan_id                path        string        true        "Loan ID"
+//        @Success                204
+//        @Failure                403        {object}        interface{}
+//        @Failure                404        {object}        interface{}
+//        @Failure                500        {object}        interface{}
+//        @Router                        /users/{user_id}/loans/{loan_id} [delete]
+func deleteLoan(c *gin.Context) <span class="cov0" title="0">{
+        deleted, err := data.DeleteLoan(c.Request.Context(), c.Param("loan_id"), c.Param("user_id"), authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if !deleted </span><span class="cov0" title="0">{
+                loanWriteFailure(c)
+                return
+        }</span>
+        <span class="cov0" title="0">c.Status(http.StatusNoContent)</span>
+}
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package server
+
+import (
         "net/http"
 
         "github.com/gin-gonic/gin"
@@ -2418,7 +2895,7 @@ func pingHandler(c *gin.Context) <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file13" style="display: none">package server
+		<pre class="file" id="file14" style="display: none">package server
 
 import (
         "net/http"
@@ -2689,7 +3166,7 @@ func setTableVisibility(c *gin.Context) <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file14" style="display: none">package server
+		<pre class="file" id="file15" style="display: none">package server
 
 import (
         "net/http"
