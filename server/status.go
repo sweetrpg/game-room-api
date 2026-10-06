@@ -24,10 +24,11 @@ func setupStatusHandlers(g *gin.Engine) {
 //
 //	 Do a health check of the application and its dependencies and return the results
 //		@Summary		Health check
-//		@Description	Health check
+//		@Description	Check the application's own health plus its dependencies (database, cache). Returns 503 if any dependency check fails.
 //		@Tags			status
 //		@Produce		json
 //		@Success		200		{object}	vo.HealthResponseVO
+//		@Failure		503		{object}	vo.HealthResponseVO	"one or more dependency checks failed"
 //		@Router			/status/health [get]
 func healthHandler(c *gin.Context) {
 	resp := apicores.HealthHandler(c.Request.Context())

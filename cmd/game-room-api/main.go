@@ -46,7 +46,7 @@ const redisConnectTimeout = 5 * time.Second
 
 // @title Game Room API service
 // @version 1.0
-// @description Swagger APIs
+// @description HTTP API for the SweetRPG Game Room domain: a user's library (owned catalog volumes), wishlists, play tables, and peer-to-peer volume loans, each with per-resource visibility controls.
 // @termsOfService https://pilgrimagesoftware.com/terms/
 // @contact.name API Support
 // @contact.url https://sweetrpg.com

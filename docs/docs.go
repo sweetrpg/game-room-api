@@ -26,7 +26,7 @@ const docTemplate = `{
     "paths": {
         "/status/health": {
             "get": {
-                "description": "Health check",
+                "description": "Check the application's own health plus its dependencies (database, cache). Returns 503 if any dependency check fails.",
                 "produces": [
                     "application/json"
                 ],
@@ -37,6 +37,12 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/vo.HealthResponseVO"
+                        }
+                    },
+                    "503": {
+                        "description": "one or more dependency checks failed",
                         "schema": {
                             "$ref": "#/definitions/vo.HealthResponseVO"
                         }
@@ -77,6 +83,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -86,17 +93,22 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/library/default-visibility": {
             "put": {
+                "description": "Set the visibility applied to library entries that have no per-entry override. Valid visibility values: public, friends, friends_of_friends, private.",
                 "consumes": [
                     "application/json"
                 ],
@@ -110,6 +122,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -128,15 +141,21 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "invalid body or invalid visibility value",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
@@ -157,6 +176,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -180,12 +200,16 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "invalid body or invalid visibility value",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
@@ -206,6 +230,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -224,21 +249,28 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "volume_id missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/library/entries/{volume_id}": {
             "delete": {
+                "description": "Unlink a catalog volume from the caller's own library.",
                 "produces": [
                     "application/json"
                 ],
@@ -249,6 +281,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -256,6 +289,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "vol-123",
                         "description": "Volume ID",
                         "name": "volume_id",
                         "in": "path",
@@ -265,11 +299,15 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
@@ -290,6 +328,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -297,6 +336,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "vol-123",
                         "description": "Volume ID",
                         "name": "volume_id",
                         "in": "path",
@@ -315,26 +355,35 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "title missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
+                        "description": "no entry for this volume_id in the library",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/library/entries/{volume_id}/visibility": {
             "put": {
-                "description": "Set (or clear, with an empty visibility) a per-entry visibility override.",
+                "description": "Set (or clear, with an empty visibility) a per-entry visibility override. Valid visibility values: public, friends, friends_of_friends, private.",
                 "consumes": [
                     "application/json"
                 ],
@@ -348,6 +397,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -355,6 +405,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "vol-123",
                         "description": "Volume ID",
                         "name": "volume_id",
                         "in": "path",
@@ -373,15 +424,21 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "invalid body or invalid visibility value",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
@@ -399,6 +456,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -408,11 +466,18 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.LoanVO"
+                            }
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             },
@@ -431,7 +496,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "example": "user-123",
+                        "description": "User ID (the lender)",
                         "name": "user_id",
                         "in": "path",
                         "required": true
@@ -449,19 +515,27 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.LoanVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "volume_id missing, or borrower fields don't satisfy the exactly-one-of rule",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "409": {
-                        "description": "Conflict",
-                        "schema": {}
+                        "description": "volume is already out on an open loan",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
@@ -479,6 +553,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-456",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -488,17 +563,25 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.LoanVO"
+                            }
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/loans/{loan_id}": {
             "delete": {
+                "description": "Permanently remove a loan record. Lender-only.",
                 "tags": [
                     "loans"
                 ],
@@ -506,13 +589,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "example": "user-123",
+                        "description": "User ID (the lender)",
                         "name": "user_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
+                        "example": "loan-789",
                         "description": "Loan ID",
                         "name": "loan_id",
                         "in": "path",
@@ -524,16 +609,23 @@ const docTemplate = `{
                         "description": "No Content"
                     },
                     "403": {
-                        "description": "Forbidden",
-                        "schema": {}
+                        "description": "loan exists but is owned by a different lender",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
+                        "description": "no loan with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
@@ -551,13 +643,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "example": "user-123",
+                        "description": "User ID (the lender)",
                         "name": "user_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
+                        "example": "loan-789",
                         "description": "Loan ID",
                         "name": "loan_id",
                         "in": "path",
@@ -567,19 +661,28 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.LoanVO"
+                        }
                     },
                     "403": {
-                        "description": "Forbidden",
-                        "schema": {}
+                        "description": "loan exists but is owned by a different lender",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
+                        "description": "no loan with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
@@ -597,6 +700,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -606,11 +710,18 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.TableVO"
+                            }
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             },
@@ -629,6 +740,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -647,21 +759,28 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "name missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/tables/{id}": {
             "get": {
+                "description": "Get one table by ID, if the caller may see it.",
                 "produces": [
                     "application/json"
                 ],
@@ -672,6 +791,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -679,6 +799,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "tbl-789",
                         "description": "Table ID",
                         "name": "id",
                         "in": "path",
@@ -688,19 +809,27 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
+                        "description": "no table with this ID exists, or the caller may not see it",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             },
             "put": {
+                "description": "Change a table's name. Owner-only.",
                 "consumes": [
                     "application/json"
                 ],
@@ -714,6 +843,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -721,6 +851,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "tbl-789",
                         "description": "Table ID",
                         "name": "id",
                         "in": "path",
@@ -739,19 +870,39 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "name missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "403": {
+                        "description": "table exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no table with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             },
             "delete": {
+                "description": "Permanently remove a table. Owner-only.",
                 "tags": [
                     "tables"
                 ],
@@ -759,6 +910,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -766,6 +918,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "tbl-789",
                         "description": "Table ID",
                         "name": "id",
                         "in": "path",
@@ -776,15 +929,31 @@ const docTemplate = `{
                     "204": {
                         "description": "No Content"
                     },
+                    "403": {
+                        "description": "table exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no table with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/tables/{id}/visibility": {
             "put": {
+                "description": "Set a table's visibility. Owner-only. Valid visibility values: public, friends, friends_of_friends, private.",
                 "consumes": [
                     "application/json"
                 ],
@@ -798,6 +967,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -805,6 +975,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "tbl-789",
                         "description": "Table ID",
                         "name": "id",
                         "in": "path",
@@ -823,21 +994,41 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "invalid body or invalid visibility value",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "403": {
+                        "description": "table exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no table with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/tables/{id}/volumes": {
             "post": {
+                "description": "Add a catalog volume to a table's shared pool. Owner-only.",
                 "consumes": [
                     "application/json"
                 ],
@@ -851,6 +1042,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -858,6 +1050,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "tbl-789",
                         "description": "Table ID",
                         "name": "id",
                         "in": "path",
@@ -876,21 +1069,41 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "volume_id missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "403": {
+                        "description": "table exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no table with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/tables/{id}/volumes/{volume_id}": {
             "delete": {
+                "description": "Remove a catalog volume from a table's shared pool. Owner-only.",
                 "produces": [
                     "application/json"
                 ],
@@ -901,6 +1114,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -908,6 +1122,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "tbl-789",
                         "description": "Table ID",
                         "name": "id",
                         "in": "path",
@@ -915,6 +1130,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "vol-123",
                         "description": "Volume ID",
                         "name": "volume_id",
                         "in": "path",
@@ -924,11 +1140,28 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
+                    },
+                    "403": {
+                        "description": "table exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no table with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
@@ -946,6 +1179,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -955,11 +1189,18 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.WishlistVO"
+                            }
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             },
@@ -978,6 +1219,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -996,21 +1238,28 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.WishlistVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "name missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/wishlists/{wishlist_id}": {
             "get": {
+                "description": "Get one wishlist by ID, if the caller may see it.",
                 "produces": [
                     "application/json"
                 ],
@@ -1021,6 +1270,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1028,6 +1278,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "wl-789",
                         "description": "Wishlist ID",
                         "name": "wishlist_id",
                         "in": "path",
@@ -1037,19 +1288,27 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.WishlistVO"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
+                        "description": "no wishlist with this ID exists, or the caller may not see it",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             },
             "delete": {
+                "description": "Permanently remove a wishlist. Owner-only.",
                 "tags": [
                     "wishlist"
                 ],
@@ -1057,6 +1316,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1064,6 +1324,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "wl-789",
                         "description": "Wishlist ID",
                         "name": "wishlist_id",
                         "in": "path",
@@ -1074,15 +1335,31 @@ const docTemplate = `{
                     "204": {
                         "description": "No Content"
                     },
+                    "403": {
+                        "description": "wishlist exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no wishlist with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/wishlists/{wishlist_id}/entries": {
             "post": {
+                "description": "Add a catalog volume to a wishlist. Owner-only.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1096,6 +1373,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1103,6 +1381,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "wl-789",
                         "description": "Wishlist ID",
                         "name": "wishlist_id",
                         "in": "path",
@@ -1121,21 +1400,41 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.WishlistVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "volume_id missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "403": {
+                        "description": "wishlist exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no wishlist with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/wishlists/{wishlist_id}/entries/{volume_id}": {
             "delete": {
+                "description": "Remove a catalog volume from a wishlist. Owner-only.",
                 "produces": [
                     "application/json"
                 ],
@@ -1146,6 +1445,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1153,6 +1453,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "wl-789",
                         "description": "Wishlist ID",
                         "name": "wishlist_id",
                         "in": "path",
@@ -1160,6 +1461,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "vol-123",
                         "description": "Volume ID",
                         "name": "volume_id",
                         "in": "path",
@@ -1169,17 +1471,35 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.WishlistVO"
+                        }
+                    },
+                    "403": {
+                        "description": "wishlist exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no wishlist with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/wishlists/{wishlist_id}/visibility": {
             "put": {
+                "description": "Set a wishlist's visibility. Owner-only. Valid visibility values: public, friends, friends_of_friends, private.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1193,6 +1513,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1200,6 +1521,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "wl-789",
                         "description": "Wishlist ID",
                         "name": "wishlist_id",
                         "in": "path",
@@ -1218,22 +1540,79 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.WishlistVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "invalid body or invalid visibility value",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "403": {
+                        "description": "wishlist exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no wishlist with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         }
     },
     "definitions": {
-        "server.createLoanRequest": {
+        "server.LibraryVO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "default_visibility": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "deleted_by": {
+                    "type": "string"
+                },
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/vo.LibraryEntryVO"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "server.LoanVO": {
             "type": "object",
             "properties": {
                 "borrower_name": {
@@ -1242,8 +1621,146 @@ const docTemplate = `{
                 "borrower_user_id": {
                     "type": "string"
                 },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "deleted_by": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lender_user_id": {
+                    "type": "string"
+                },
+                "lent_at": {
+                    "type": "string"
+                },
+                "returned_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                },
                 "volume_id": {
                     "type": "string"
+                }
+            }
+        },
+        "server.TableVO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "deleted_by": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string"
+                },
+                "volume_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "volume_titles": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "server.WishlistVO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "deleted_by": {
+                    "type": "string"
+                },
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/vo.WishlistEntryVO"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string"
+                }
+            }
+        },
+        "server.createLoanRequest": {
+            "type": "object",
+            "properties": {
+                "borrower_name": {
+                    "type": "string",
+                    "example": "Jordan"
+                },
+                "borrower_user_id": {
+                    "type": "string",
+                    "example": "user-456"
+                },
+                "volume_id": {
+                    "type": "string",
+                    "example": "vol-123"
                 }
             }
         },
@@ -1251,7 +1768,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Friday night group"
                 }
             }
         },
@@ -1259,7 +1777,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Birthday wishlist"
                 }
             }
         },
@@ -1270,7 +1789,11 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "vol-123",
+                        "vol-456"
+                    ]
                 }
             }
         },
@@ -1278,7 +1801,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "title": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Curse of Strahd (2nd printing)"
                 }
             }
         },
@@ -1286,7 +1810,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "visibility": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "friends"
                 }
             }
         },
@@ -1294,9 +1819,22 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "volume_id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "vol-123"
                 },
                 "volume_title": {
+                    "type": "string",
+                    "example": "Curse of Strahd"
+                }
+            }
+        },
+        "vo.ErrorVO": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "message": {
                     "type": "string"
                 }
             }
@@ -1327,6 +1865,23 @@ const docTemplate = `{
                 }
             }
         },
+        "vo.LibraryEntryVO": {
+            "type": "object",
+            "properties": {
+                "added_at": {
+                    "type": "string"
+                },
+                "visibility_override": {
+                    "type": "string"
+                },
+                "volume_id": {
+                    "type": "string"
+                },
+                "volume_title": {
+                    "type": "string"
+                }
+            }
+        },
         "vo.PingResponseVO": {
             "type": "object",
             "properties": {
@@ -1334,6 +1889,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "hostname": {
+                    "type": "string"
+                }
+            }
+        },
+        "vo.WishlistEntryVO": {
+            "type": "object",
+            "properties": {
+                "added_at": {
+                    "type": "string"
+                },
+                "volume_id": {
+                    "type": "string"
+                },
+                "volume_title": {
                     "type": "string"
                 }
             }
@@ -1348,7 +1917,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "Game Room API service",
-	Description:      "Swagger APIs",
+	Description:      "HTTP API for the SweetRPG Game Room domain: a user's library (owned catalog volumes), wishlists, play tables, and peer-to-peer volume loans, each with per-resource visibility controls.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

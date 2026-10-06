@@ -1,26 +1,148 @@
 definitions:
-  server.createLoanRequest:
+  server.LibraryVO:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: string
+      default_visibility:
+        type: string
+      deleted_at:
+        type: string
+      deleted_by:
+        type: string
+      entries:
+        items:
+          $ref: '#/definitions/vo.LibraryEntryVO'
+        type: array
+      id:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+      user_id:
+        type: string
+    type: object
+  server.LoanVO:
     properties:
       borrower_name:
         type: string
       borrower_user_id:
         type: string
+      created_at:
+        type: string
+      created_by:
+        type: string
+      deleted_at:
+        type: string
+      deleted_by:
+        type: string
+      id:
+        type: string
+      lender_user_id:
+        type: string
+      lent_at:
+        type: string
+      returned_at:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: string
       volume_id:
+        type: string
+    type: object
+  server.TableVO:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: string
+      deleted_at:
+        type: string
+      deleted_by:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+      user_id:
+        type: string
+      visibility:
+        type: string
+      volume_ids:
+        items:
+          type: string
+        type: array
+      volume_titles:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+  server.WishlistVO:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: string
+      deleted_at:
+        type: string
+      deleted_by:
+        type: string
+      entries:
+        items:
+          $ref: '#/definitions/vo.WishlistEntryVO'
+        type: array
+      id:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+      user_id:
+        type: string
+      visibility:
+        type: string
+    type: object
+  server.createLoanRequest:
+    properties:
+      borrower_name:
+        example: Jordan
+        type: string
+      borrower_user_id:
+        example: user-456
+        type: string
+      volume_id:
+        example: vol-123
         type: string
     type: object
   server.createTableRequest:
     properties:
       name:
+        example: Friday night group
         type: string
     type: object
   server.createWishlistRequest:
     properties:
       name:
+        example: Birthday wishlist
         type: string
     type: object
   server.previewResponse:
     properties:
       affected_volume_ids:
+        example:
+        - vol-123
+        - vol-456
         items:
           type: string
         type: array
@@ -28,18 +150,29 @@ definitions:
   server.titleRequest:
     properties:
       title:
+        example: Curse of Strahd (2nd printing)
         type: string
     type: object
   server.visibilityRequest:
     properties:
       visibility:
+        example: friends
         type: string
     type: object
   server.volumeEntryRequest:
     properties:
       volume_id:
+        example: vol-123
         type: string
       volume_title:
+        example: Curse of Strahd
+        type: string
+    type: object
+  vo.ErrorVO:
+    properties:
+      error:
+        type: string
+      message:
         type: string
     type: object
   vo.HealthResponseVO:
@@ -59,6 +192,17 @@ definitions:
       ping:
         type: string
     type: object
+  vo.LibraryEntryVO:
+    properties:
+      added_at:
+        type: string
+      visibility_override:
+        type: string
+      volume_id:
+        type: string
+      volume_title:
+        type: string
+    type: object
   vo.PingResponseVO:
     properties:
       date:
@@ -66,12 +210,23 @@ definitions:
       hostname:
         type: string
     type: object
+  vo.WishlistEntryVO:
+    properties:
+      added_at:
+        type: string
+      volume_id:
+        type: string
+      volume_title:
+        type: string
+    type: object
 info:
   contact:
     email: admin@sweetrpg.com
     name: API Support
     url: https://sweetrpg.com
-  description: Swagger APIs
+  description: 'HTTP API for the SweetRPG Game Room domain: a user''s library (owned
+    catalog volumes), wishlists, play tables, and peer-to-peer volume loans, each
+    with per-resource visibility controls.'
   license:
     name: MIT
     url: https://mit-license.org/
@@ -81,12 +236,17 @@ info:
 paths:
   /status/health:
     get:
-      description: Health check
+      description: Check the application's own health plus its dependencies (database,
+        cache). Returns 503 if any dependency check fails.
       produces:
       - application/json
       responses:
         "200":
           description: OK
+          schema:
+            $ref: '#/definitions/vo.HealthResponseVO'
+        "503":
+          description: one or more dependency checks failed
           schema:
             $ref: '#/definitions/vo.HealthResponseVO'
       summary: Health check
@@ -110,6 +270,7 @@ paths:
       description: Get a user's library, filtered to what the caller may see.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
@@ -119,10 +280,12 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.LibraryVO'
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Get library
       tags:
       - library
@@ -130,8 +293,11 @@ paths:
     put:
       consumes:
       - application/json
+      description: 'Set the visibility applied to library entries that have no per-entry
+        override. Valid visibility values: public, friends, friends_of_friends, private.'
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
@@ -147,13 +313,16 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.LibraryVO'
         "400":
-          description: Bad Request
-          schema: {}
+          description: invalid body or invalid visibility value
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Set library default visibility
       tags:
       - library
@@ -166,6 +335,7 @@ paths:
         caller commits to the change.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
@@ -184,11 +354,13 @@ paths:
           schema:
             $ref: '#/definitions/server.previewResponse'
         "400":
-          description: Bad Request
-          schema: {}
+          description: invalid body or invalid visibility value
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Preview library default-visibility change
       tags:
       - library
@@ -199,6 +371,7 @@ paths:
       description: Link a catalog volume into the caller's own library.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
@@ -214,25 +387,31 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.LibraryVO'
         "400":
-          description: Bad Request
-          schema: {}
+          description: volume_id missing
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Add library entry
       tags:
       - library
   /users/{user_id}/library/entries/{volume_id}:
     delete:
+      description: Unlink a catalog volume from the caller's own library.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
         type: string
       - description: Volume ID
+        example: vol-123
         in: path
         name: volume_id
         required: true
@@ -242,10 +421,12 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.LibraryVO'
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Remove library entry
       tags:
       - library
@@ -256,11 +437,13 @@ paths:
       description: Refresh the denormalized title snapshot on a single library entry.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
         type: string
       - description: Volume ID
+        example: vol-123
         in: path
         name: volume_id
         required: true
@@ -276,16 +459,21 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.LibraryVO'
         "400":
-          description: Bad Request
-          schema: {}
+          description: title missing
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
         "404":
-          description: Not Found
-          schema: {}
+          description: no entry for this volume_id in the library
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Update library entry title
       tags:
       - library
@@ -293,15 +481,17 @@ paths:
     put:
       consumes:
       - application/json
-      description: Set (or clear, with an empty visibility) a per-entry visibility
-        override.
+      description: 'Set (or clear, with an empty visibility) a per-entry visibility
+        override. Valid visibility values: public, friends, friends_of_friends, private.'
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
         type: string
       - description: Volume ID
+        example: vol-123
         in: path
         name: volume_id
         required: true
@@ -317,13 +507,16 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.LibraryVO'
         "400":
-          description: Bad Request
-          schema: {}
+          description: invalid body or invalid visibility value
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Set library entry visibility override
       tags:
       - library
@@ -332,6 +525,7 @@ paths:
       description: List the volumes a user has lent out, both open and returned.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
@@ -341,10 +535,14 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            items:
+              $ref: '#/definitions/server.LoanVO'
+            type: array
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: List lent loans
       tags:
       - loans
@@ -355,7 +553,8 @@ paths:
         name. Exactly one of borrower_user_id or borrower_name is required; when borrower_user_id
         is given, borrower_name must also be supplied as that user's display name.
       parameters:
-      - description: User ID
+      - description: User ID (the lender)
+        example: user-123
         in: path
         name: user_id
         required: true
@@ -371,28 +570,36 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.LoanVO'
         "400":
-          description: Bad Request
-          schema: {}
+          description: volume_id missing, or borrower fields don't satisfy the exactly-one-of
+            rule
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
         "409":
-          description: Conflict
-          schema: {}
+          description: volume is already out on an open loan
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Create loan
       tags:
       - loans
   /users/{user_id}/loans/{loan_id}:
     delete:
+      description: Permanently remove a loan record. Lender-only.
       parameters:
-      - description: User ID
+      - description: User ID (the lender)
+        example: user-123
         in: path
         name: user_id
         required: true
         type: string
       - description: Loan ID
+        example: loan-789
         in: path
         name: loan_id
         required: true
@@ -401,14 +608,18 @@ paths:
         "204":
           description: No Content
         "403":
-          description: Forbidden
-          schema: {}
+          description: loan exists but is owned by a different lender
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
         "404":
-          description: Not Found
-          schema: {}
+          description: no loan with this ID exists
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Delete loan
       tags:
       - loans
@@ -416,12 +627,14 @@ paths:
     post:
       description: Mark a lent-out loan as returned. Lender-only.
       parameters:
-      - description: User ID
+      - description: User ID (the lender)
+        example: user-123
         in: path
         name: user_id
         required: true
         type: string
       - description: Loan ID
+        example: loan-789
         in: path
         name: loan_id
         required: true
@@ -431,16 +644,21 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.LoanVO'
         "403":
-          description: Forbidden
-          schema: {}
+          description: loan exists but is owned by a different lender
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
         "404":
-          description: Not Found
-          schema: {}
+          description: no loan with this ID exists
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Return loan
       tags:
       - loans
@@ -450,6 +668,7 @@ paths:
         and returned.
       parameters:
       - description: User ID
+        example: user-456
         in: path
         name: user_id
         required: true
@@ -459,10 +678,14 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            items:
+              $ref: '#/definitions/server.LoanVO'
+            type: array
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: List borrowed loans
       tags:
       - loans
@@ -471,6 +694,7 @@ paths:
       description: List a user's tables, filtered to what the caller may see.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
@@ -480,10 +704,14 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            items:
+              $ref: '#/definitions/server.TableVO'
+            type: array
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: List tables
       tags:
       - tables
@@ -493,6 +721,7 @@ paths:
       description: Create a new table, defaulting to private visibility.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
@@ -508,25 +737,31 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.TableVO'
         "400":
-          description: Bad Request
-          schema: {}
+          description: name missing
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Create table
       tags:
       - tables
   /users/{user_id}/tables/{id}:
     delete:
+      description: Permanently remove a table. Owner-only.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
         type: string
       - description: Table ID
+        example: tbl-789
         in: path
         name: id
         required: true
@@ -534,20 +769,33 @@ paths:
       responses:
         "204":
           description: No Content
+        "403":
+          description: table exists but is owned by a different user
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
+        "404":
+          description: no table with this ID exists
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Delete table
       tags:
       - tables
     get:
+      description: Get one table by ID, if the caller may see it.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
         type: string
       - description: Table ID
+        example: tbl-789
         in: path
         name: id
         required: true
@@ -557,26 +805,33 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.TableVO'
         "404":
-          description: Not Found
-          schema: {}
+          description: no table with this ID exists, or the caller may not see it
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Get table
       tags:
       - tables
     put:
       consumes:
       - application/json
+      description: Change a table's name. Owner-only.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
         type: string
       - description: Table ID
+        example: tbl-789
         in: path
         name: id
         required: true
@@ -592,13 +847,25 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.TableVO'
         "400":
-          description: Bad Request
-          schema: {}
+          description: name missing
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
+        "403":
+          description: table exists but is owned by a different user
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
+        "404":
+          description: no table with this ID exists
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Rename table
       tags:
       - tables
@@ -606,13 +873,17 @@ paths:
     put:
       consumes:
       - application/json
+      description: 'Set a table''s visibility. Owner-only. Valid visibility values:
+        public, friends, friends_of_friends, private.'
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
         type: string
       - description: Table ID
+        example: tbl-789
         in: path
         name: id
         required: true
@@ -628,13 +899,25 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.TableVO'
         "400":
-          description: Bad Request
-          schema: {}
+          description: invalid body or invalid visibility value
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
+        "403":
+          description: table exists but is owned by a different user
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
+        "404":
+          description: no table with this ID exists
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Set table visibility
       tags:
       - tables
@@ -642,13 +925,16 @@ paths:
     post:
       consumes:
       - application/json
+      description: Add a catalog volume to a table's shared pool. Owner-only.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
         type: string
       - description: Table ID
+        example: tbl-789
         in: path
         name: id
         required: true
@@ -664,30 +950,46 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.TableVO'
         "400":
-          description: Bad Request
-          schema: {}
+          description: volume_id missing
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
+        "403":
+          description: table exists but is owned by a different user
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
+        "404":
+          description: no table with this ID exists
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Add table volume
       tags:
       - tables
   /users/{user_id}/tables/{id}/volumes/{volume_id}:
     delete:
+      description: Remove a catalog volume from a table's shared pool. Owner-only.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
         type: string
       - description: Table ID
+        example: tbl-789
         in: path
         name: id
         required: true
         type: string
       - description: Volume ID
+        example: vol-123
         in: path
         name: volume_id
         required: true
@@ -697,10 +999,21 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.TableVO'
+        "403":
+          description: table exists but is owned by a different user
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
+        "404":
+          description: no table with this ID exists
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Remove table volume
       tags:
       - tables
@@ -709,6 +1022,7 @@ paths:
       description: List a user's wishlists, filtered to what the caller may see.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
@@ -718,10 +1032,14 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            items:
+              $ref: '#/definitions/server.WishlistVO'
+            type: array
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: List wishlists
       tags:
       - wishlist
@@ -731,6 +1049,7 @@ paths:
       description: Create a new named wishlist, defaulting to private visibility.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
@@ -746,25 +1065,31 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.WishlistVO'
         "400":
-          description: Bad Request
-          schema: {}
+          description: name missing
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Create wishlist
       tags:
       - wishlist
   /users/{user_id}/wishlists/{wishlist_id}:
     delete:
+      description: Permanently remove a wishlist. Owner-only.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
         type: string
       - description: Wishlist ID
+        example: wl-789
         in: path
         name: wishlist_id
         required: true
@@ -772,20 +1097,33 @@ paths:
       responses:
         "204":
           description: No Content
+        "403":
+          description: wishlist exists but is owned by a different user
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
+        "404":
+          description: no wishlist with this ID exists
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Delete wishlist
       tags:
       - wishlist
     get:
+      description: Get one wishlist by ID, if the caller may see it.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
         type: string
       - description: Wishlist ID
+        example: wl-789
         in: path
         name: wishlist_id
         required: true
@@ -795,13 +1133,18 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.WishlistVO'
         "404":
-          description: Not Found
-          schema: {}
+          description: no wishlist with this ID exists, or the caller may not see
+            it
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Get wishlist
       tags:
       - wishlist
@@ -809,13 +1152,16 @@ paths:
     post:
       consumes:
       - application/json
+      description: Add a catalog volume to a wishlist. Owner-only.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
         type: string
       - description: Wishlist ID
+        example: wl-789
         in: path
         name: wishlist_id
         required: true
@@ -831,30 +1177,46 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.WishlistVO'
         "400":
-          description: Bad Request
-          schema: {}
+          description: volume_id missing
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
+        "403":
+          description: wishlist exists but is owned by a different user
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
+        "404":
+          description: no wishlist with this ID exists
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Add wishlist entry
       tags:
       - wishlist
   /users/{user_id}/wishlists/{wishlist_id}/entries/{volume_id}:
     delete:
+      description: Remove a catalog volume from a wishlist. Owner-only.
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
         type: string
       - description: Wishlist ID
+        example: wl-789
         in: path
         name: wishlist_id
         required: true
         type: string
       - description: Volume ID
+        example: vol-123
         in: path
         name: volume_id
         required: true
@@ -864,10 +1226,21 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.WishlistVO'
+        "403":
+          description: wishlist exists but is owned by a different user
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
+        "404":
+          description: no wishlist with this ID exists
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Remove wishlist entry
       tags:
       - wishlist
@@ -875,13 +1248,17 @@ paths:
     put:
       consumes:
       - application/json
+      description: 'Set a wishlist''s visibility. Owner-only. Valid visibility values:
+        public, friends, friends_of_friends, private.'
       parameters:
       - description: User ID
+        example: user-123
         in: path
         name: user_id
         required: true
         type: string
       - description: Wishlist ID
+        example: wl-789
         in: path
         name: wishlist_id
         required: true
@@ -897,13 +1274,25 @@ paths:
       responses:
         "200":
           description: OK
-          schema: {}
+          schema:
+            $ref: '#/definitions/server.WishlistVO'
         "400":
-          description: Bad Request
-          schema: {}
+          description: invalid body or invalid visibility value
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
+        "403":
+          description: wishlist exists but is owned by a different user
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
+        "404":
+          description: no wishlist with this ID exists
+          schema:
+            additionalProperties: true
+            type: object
         "500":
           description: Internal Server Error
-          schema: {}
+          schema:
+            $ref: '#/definitions/vo.ErrorVO'
       summary: Set wishlist visibility
       tags:
       - wishlist
