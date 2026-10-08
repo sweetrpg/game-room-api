@@ -278,7 +278,7 @@ const redisConnectTimeout = 5 * time.Second
 
 // @title Game Room API service
 // @version 1.0
-// @description Swagger APIs
+// @description HTTP API for the SweetRPG Game Room domain: a user's library (owned catalog volumes), wishlists, play tables, and peer-to-peer volume loans, each with per-resource visibility controls.
 // @termsOfService https://pilgrimagesoftware.com/terms/
 // @contact.name API Support
 // @contact.url https://sweetrpg.com
@@ -699,7 +699,7 @@ const docTemplate = `{
     "paths": {
         "/status/health": {
             "get": {
-                "description": "Health check",
+                "description": "Check the application's own health plus its dependencies (database, cache). Returns 503 if any dependency check fails.",
                 "produces": [
                     "application/json"
                 ],
@@ -710,6 +710,12 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/vo.HealthResponseVO"
+                        }
+                    },
+                    "503": {
+                        "description": "one or more dependency checks failed",
                         "schema": {
                             "$ref": "#/definitions/vo.HealthResponseVO"
                         }
@@ -750,6 +756,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -759,17 +766,22 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/library/default-visibility": {
             "put": {
+                "description": "Set the visibility applied to library entries that have no per-entry override. Valid visibility values: public, friends, friends_of_friends, private.",
                 "consumes": [
                     "application/json"
                 ],
@@ -783,6 +795,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -801,15 +814,21 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "invalid body or invalid visibility value",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
@@ -830,6 +849,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -853,12 +873,16 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "invalid body or invalid visibility value",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
@@ -879,6 +903,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -897,21 +922,28 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "volume_id missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/library/entries/{volume_id}": {
             "delete": {
+                "description": "Unlink a catalog volume from the caller's own library.",
                 "produces": [
                     "application/json"
                 ],
@@ -922,6 +954,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -929,6 +962,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "vol-123",
                         "description": "Volume ID",
                         "name": "volume_id",
                         "in": "path",
@@ -938,11 +972,15 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
@@ -963,6 +1001,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -970,6 +1009,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "vol-123",
                         "description": "Volume ID",
                         "name": "volume_id",
                         "in": "path",
@@ -988,26 +1028,35 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "title missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
+                        "description": "no entry for this volume_id in the library",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/library/entries/{volume_id}/visibility": {
             "put": {
-                "description": "Set (or clear, with an empty visibility) a per-entry visibility override.",
+                "description": "Set (or clear, with an empty visibility) a per-entry visibility override. Valid visibility values: public, friends, friends_of_friends, private.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1021,6 +1070,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1028,6 +1078,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "vol-123",
                         "description": "Volume ID",
                         "name": "volume_id",
                         "in": "path",
@@ -1046,15 +1097,21 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "invalid body or invalid visibility value",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
@@ -1072,6 +1129,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1081,11 +1139,18 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.LoanVO"
+                            }
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             },
@@ -1104,7 +1169,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "example": "user-123",
+                        "description": "User ID (the lender)",
                         "name": "user_id",
                         "in": "path",
                         "required": true
@@ -1122,19 +1188,27 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.LoanVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "volume_id missing, or borrower fields don't satisfy the exactly-one-of rule",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "409": {
-                        "description": "Conflict",
-                        "schema": {}
+                        "description": "volume is already out on an open loan",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
@@ -1152,6 +1226,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-456",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1161,17 +1236,25 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.LoanVO"
+                            }
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/loans/{loan_id}": {
             "delete": {
+                "description": "Permanently remove a loan record. Lender-only.",
                 "tags": [
                     "loans"
                 ],
@@ -1179,13 +1262,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "example": "user-123",
+                        "description": "User ID (the lender)",
                         "name": "user_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
+                        "example": "loan-789",
                         "description": "Loan ID",
                         "name": "loan_id",
                         "in": "path",
@@ -1197,16 +1282,23 @@ const docTemplate = `{
                         "description": "No Content"
                     },
                     "403": {
-                        "description": "Forbidden",
-                        "schema": {}
+                        "description": "loan exists but is owned by a different lender",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
+                        "description": "no loan with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
@@ -1224,13 +1316,15 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "User ID",
+                        "example": "user-123",
+                        "description": "User ID (the lender)",
                         "name": "user_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
+                        "example": "loan-789",
                         "description": "Loan ID",
                         "name": "loan_id",
                         "in": "path",
@@ -1240,19 +1334,28 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.LoanVO"
+                        }
                     },
                     "403": {
-                        "description": "Forbidden",
-                        "schema": {}
+                        "description": "loan exists but is owned by a different lender",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
+                        "description": "no loan with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
@@ -1270,6 +1373,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1279,11 +1383,18 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.TableVO"
+                            }
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             },
@@ -1302,6 +1413,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1320,21 +1432,28 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "name missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/tables/{id}": {
             "get": {
+                "description": "Get one table by ID, if the caller may see it.",
                 "produces": [
                     "application/json"
                 ],
@@ -1345,6 +1464,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1352,6 +1472,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "tbl-789",
                         "description": "Table ID",
                         "name": "id",
                         "in": "path",
@@ -1361,19 +1482,27 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
+                        "description": "no table with this ID exists, or the caller may not see it",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             },
             "put": {
+                "description": "Change a table's name. Owner-only.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1387,6 +1516,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1394,6 +1524,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "tbl-789",
                         "description": "Table ID",
                         "name": "id",
                         "in": "path",
@@ -1412,19 +1543,39 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "name missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "403": {
+                        "description": "table exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no table with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             },
             "delete": {
+                "description": "Permanently remove a table. Owner-only.",
                 "tags": [
                     "tables"
                 ],
@@ -1432,6 +1583,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1439,6 +1591,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "tbl-789",
                         "description": "Table ID",
                         "name": "id",
                         "in": "path",
@@ -1449,15 +1602,31 @@ const docTemplate = `{
                     "204": {
                         "description": "No Content"
                     },
+                    "403": {
+                        "description": "table exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no table with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/tables/{id}/visibility": {
             "put": {
+                "description": "Set a table's visibility. Owner-only. Valid visibility values: public, friends, friends_of_friends, private.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1471,6 +1640,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1478,6 +1648,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "tbl-789",
                         "description": "Table ID",
                         "name": "id",
                         "in": "path",
@@ -1496,21 +1667,41 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "invalid body or invalid visibility value",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "403": {
+                        "description": "table exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no table with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/tables/{id}/volumes": {
             "post": {
+                "description": "Add a catalog volume to a table's shared pool. Owner-only.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1524,6 +1715,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1531,6 +1723,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "tbl-789",
                         "description": "Table ID",
                         "name": "id",
                         "in": "path",
@@ -1549,21 +1742,41 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "volume_id missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "403": {
+                        "description": "table exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no table with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/tables/{id}/volumes/{volume_id}": {
             "delete": {
+                "description": "Remove a catalog volume from a table's shared pool. Owner-only.",
                 "produces": [
                     "application/json"
                 ],
@@ -1574,6 +1787,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1581,6 +1795,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "tbl-789",
                         "description": "Table ID",
                         "name": "id",
                         "in": "path",
@@ -1588,6 +1803,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "vol-123",
                         "description": "Volume ID",
                         "name": "volume_id",
                         "in": "path",
@@ -1597,11 +1813,28 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
+                    },
+                    "403": {
+                        "description": "table exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no table with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
@@ -1619,6 +1852,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1628,11 +1862,18 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.WishlistVO"
+                            }
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             },
@@ -1651,6 +1892,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1669,21 +1911,28 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.WishlistVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "name missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/wishlists/{wishlist_id}": {
             "get": {
+                "description": "Get one wishlist by ID, if the caller may see it.",
                 "produces": [
                     "application/json"
                 ],
@@ -1694,6 +1943,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1701,6 +1951,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "wl-789",
                         "description": "Wishlist ID",
                         "name": "wishlist_id",
                         "in": "path",
@@ -1710,19 +1961,27 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.WishlistVO"
+                        }
                     },
                     "404": {
-                        "description": "Not Found",
-                        "schema": {}
+                        "description": "no wishlist with this ID exists, or the caller may not see it",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             },
             "delete": {
+                "description": "Permanently remove a wishlist. Owner-only.",
                 "tags": [
                     "wishlist"
                 ],
@@ -1730,6 +1989,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1737,6 +1997,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "wl-789",
                         "description": "Wishlist ID",
                         "name": "wishlist_id",
                         "in": "path",
@@ -1747,15 +2008,31 @@ const docTemplate = `{
                     "204": {
                         "description": "No Content"
                     },
+                    "403": {
+                        "description": "wishlist exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no wishlist with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/wishlists/{wishlist_id}/entries": {
             "post": {
+                "description": "Add a catalog volume to a wishlist. Owner-only.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1769,6 +2046,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1776,6 +2054,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "wl-789",
                         "description": "Wishlist ID",
                         "name": "wishlist_id",
                         "in": "path",
@@ -1794,21 +2073,41 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.WishlistVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "volume_id missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "403": {
+                        "description": "wishlist exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no wishlist with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/wishlists/{wishlist_id}/entries/{volume_id}": {
             "delete": {
+                "description": "Remove a catalog volume from a wishlist. Owner-only.",
                 "produces": [
                     "application/json"
                 ],
@@ -1819,6 +2118,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1826,6 +2126,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "wl-789",
                         "description": "Wishlist ID",
                         "name": "wishlist_id",
                         "in": "path",
@@ -1833,6 +2134,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "vol-123",
                         "description": "Volume ID",
                         "name": "volume_id",
                         "in": "path",
@@ -1842,17 +2144,35 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.WishlistVO"
+                        }
+                    },
+                    "403": {
+                        "description": "wishlist exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no wishlist with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         },
         "/users/{user_id}/wishlists/{wishlist_id}/visibility": {
             "put": {
+                "description": "Set a wishlist's visibility. Owner-only. Valid visibility values: public, friends, friends_of_friends, private.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1866,6 +2186,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "user-123",
                         "description": "User ID",
                         "name": "user_id",
                         "in": "path",
@@ -1873,6 +2194,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "example": "wl-789",
                         "description": "Wishlist ID",
                         "name": "wishlist_id",
                         "in": "path",
@@ -1891,22 +2213,79 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/server.WishlistVO"
+                        }
                     },
                     "400": {
-                        "description": "Bad Request",
-                        "schema": {}
+                        "description": "invalid body or invalid visibility value",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "403": {
+                        "description": "wishlist exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no wishlist with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {}
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
                     }
                 }
             }
         }
     },
     "definitions": {
-        "server.createLoanRequest": {
+        "server.LibraryVO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "default_visibility": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "deleted_by": {
+                    "type": "string"
+                },
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/vo.LibraryEntryVO"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "server.LoanVO": {
             "type": "object",
             "properties": {
                 "borrower_name": {
@@ -1915,8 +2294,146 @@ const docTemplate = `{
                 "borrower_user_id": {
                     "type": "string"
                 },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "deleted_by": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lender_user_id": {
+                    "type": "string"
+                },
+                "lent_at": {
+                    "type": "string"
+                },
+                "returned_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                },
                 "volume_id": {
                     "type": "string"
+                }
+            }
+        },
+        "server.TableVO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "deleted_by": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string"
+                },
+                "volume_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "volume_titles": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "server.WishlistVO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "deleted_by": {
+                    "type": "string"
+                },
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/vo.WishlistEntryVO"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string"
+                }
+            }
+        },
+        "server.createLoanRequest": {
+            "type": "object",
+            "properties": {
+                "borrower_name": {
+                    "type": "string",
+                    "example": "Jordan"
+                },
+                "borrower_user_id": {
+                    "type": "string",
+                    "example": "user-456"
+                },
+                "volume_id": {
+                    "type": "string",
+                    "example": "vol-123"
                 }
             }
         },
@@ -1924,7 +2441,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Friday night group"
                 }
             }
         },
@@ -1932,7 +2450,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Birthday wishlist"
                 }
             }
         },
@@ -1943,7 +2462,11 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "vol-123",
+                        "vol-456"
+                    ]
                 }
             }
         },
@@ -1951,7 +2474,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "title": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Curse of Strahd (2nd printing)"
                 }
             }
         },
@@ -1959,7 +2483,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "visibility": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "friends"
                 }
             }
         },
@@ -1967,9 +2492,22 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "volume_id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "vol-123"
                 },
                 "volume_title": {
+                    "type": "string",
+                    "example": "Curse of Strahd"
+                }
+            }
+        },
+        "vo.ErrorVO": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "message": {
                     "type": "string"
                 }
             }
@@ -2000,6 +2538,23 @@ const docTemplate = `{
                 }
             }
         },
+        "vo.LibraryEntryVO": {
+            "type": "object",
+            "properties": {
+                "added_at": {
+                    "type": "string"
+                },
+                "visibility_override": {
+                    "type": "string"
+                },
+                "volume_id": {
+                    "type": "string"
+                },
+                "volume_title": {
+                    "type": "string"
+                }
+            }
+        },
         "vo.PingResponseVO": {
             "type": "object",
             "properties": {
@@ -2007,6 +2562,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "hostname": {
+                    "type": "string"
+                }
+            }
+        },
+        "vo.WishlistEntryVO": {
+            "type": "object",
+            "properties": {
+                "added_at": {
+                    "type": "string"
+                },
+                "volume_id": {
+                    "type": "string"
+                },
+                "volume_title": {
                     "type": "string"
                 }
             }
@@ -2021,7 +2590,7 @@ var SwaggerInfo = &amp;swag.Spec{
         BasePath:         "",
         Schemes:          []string{},
         Title:            "Game Room API service",
-        Description:      "Swagger APIs",
+        Description:      "HTTP API for the SweetRPG Game Room domain: a user's library (owned catalog volumes), wishlists, play tables, and peer-to-peer volume loans, each with per-resource visibility controls.",
         InfoInstanceName: "swagger",
         SwaggerTemplate:  docTemplate,
         LeftDelim:        "{{",
@@ -2343,25 +2912,35 @@ import (
         "github.com/gin-gonic/gin"
         apiv "github.com/sweetrpg/api-core.go/vo"
         "github.com/sweetrpg/game-room-objects.go/models"
+        govo "github.com/sweetrpg/game-room-objects.go/vo"
+)
+
+// Documentation-only aliases so swaggo can resolve concrete response schemas for @Success/
+// @Failure annotations without the server package otherwise needing to import game-room-objects.go/vo.
+type (
+        LoanVO     = govo.LoanVO
+        LibraryVO  = govo.LibraryVO
+        WishlistVO = govo.WishlistVO
+        TableVO    = govo.TableVO
 )
 
 // volumeEntryRequest is shared by the library, wishlist, and table add-entry endpoints. All
 // three capture volume_title as a denormalized snapshot for display without a catalog lookup.
 type volumeEntryRequest struct {
-        VolumeID    string `json:"volume_id"`
-        VolumeTitle string `json:"volume_title"`
+        VolumeID    string `json:"volume_id" example:"vol-123"`
+        VolumeTitle string `json:"volume_title" example:"Curse of Strahd"`
 }
 
 type visibilityRequest struct {
-        Visibility string `json:"visibility"`
+        Visibility string `json:"visibility" example:"friends"`
 }
 
 type titleRequest struct {
-        Title string `json:"title"`
+        Title string `json:"title" example:"Curse of Strahd (2nd printing)"`
 }
 
 type previewResponse struct {
-        AffectedVolumeIDs []string `json:"affected_volume_ids"`
+        AffectedVolumeIDs []string `json:"affected_volume_ids" example:"vol-123,vol-456"`
 }
 
 var validVisibilities = map[string]models.Visibility{
@@ -2452,9 +3031,9 @@ func setupLibraryHandlers(g *gin.Engine, store persistence.CacheStore, ttls cach
 //        @Description        Get a user's library, filtered to what the caller may see.
 //        @Tags                        library
 //        @Produce                json
-//        @Param                        user_id        path                string        true        "User ID"
-//        @Success                200                {object}        interface{}
-//        @Failure                500                {object}        interface{}
+//        @Param                        user_id        path                string        true        "User ID"        example(user-123)
+//        @Success                200                {object}        LibraryVO
+//        @Failure                500                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/library [get]
 func getLibrary(c *gin.Context) <span class="cov0" title="0">{
         userID := c.Param("user_id")
@@ -2476,11 +3055,11 @@ func getLibrary(c *gin.Context) <span class="cov0" title="0">{
 //        @Tags                        library
 //        @Accept                        json
 //        @Produce                json
-//        @Param                        user_id        path                string                                true        "User ID"
+//        @Param                        user_id        path                string                                true        "User ID"        example(user-123)
 //        @Param                        body        body                volumeEntryRequest        true        "Volume to add"
-//        @Success                200                {object}        interface{}
-//        @Failure                400                {object}        interface{}
-//        @Failure                500                {object}        interface{}
+//        @Success                200                {object}        LibraryVO
+//        @Failure                400                {object}        apiv.ErrorVO        "volume_id missing"
+//        @Failure                500                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/library/entries [post]
 func addLibraryEntry(c *gin.Context) <span class="cov0" title="0">{
         var req volumeEntryRequest
@@ -2499,12 +3078,13 @@ func addLibraryEntry(c *gin.Context) <span class="cov0" title="0">{
 // Remove a library entry.
 //
 //        @Summary                Remove library entry
+//        @Description        Unlink a catalog volume from the caller's own library.
 //        @Tags                        library
 //        @Produce                json
-//        @Param                        user_id                path                string        true        "User ID"
-//        @Param                        volume_id        path                string        true        "Volume ID"
-//        @Success                200                        {object}        interface{}
-//        @Failure                500                        {object}        interface{}
+//        @Param                        user_id                path                string        true        "User ID"        example(user-123)
+//        @Param                        volume_id        path                string        true        "Volume ID"        example(vol-123)
+//        @Success                200                        {object}        LibraryVO
+//        @Failure                500                        {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/library/entries/{volume_id} [delete]
 func removeLibraryEntry(c *gin.Context) <span class="cov0" title="0">{
         lib, err := data.RemoveLibraryEntry(c.Request.Context(), c.Param("user_id"), c.Param("volume_id"), authz.Viewer(c))
@@ -2518,16 +3098,16 @@ func removeLibraryEntry(c *gin.Context) <span class="cov0" title="0">{
 // Set a library entry's visibility override.
 //
 //        @Summary                Set library entry visibility override
-//        @Description        Set (or clear, with an empty visibility) a per-entry visibility override.
+//        @Description        Set (or clear, with an empty visibility) a per-entry visibility override. Valid visibility values: public, friends, friends_of_friends, private.
 //        @Tags                        library
 //        @Accept                        json
 //        @Produce                json
-//        @Param                        user_id                path                string                                true        "User ID"
-//        @Param                        volume_id        path                string                                true        "Volume ID"
+//        @Param                        user_id                path                string                                true        "User ID"        example(user-123)
+//        @Param                        volume_id        path                string                                true        "Volume ID"        example(vol-123)
 //        @Param                        body                body                visibilityRequest        true        "New override (empty clears it)"
-//        @Success                200                        {object}        interface{}
-//        @Failure                400                        {object}        interface{}
-//        @Failure                500                        {object}        interface{}
+//        @Success                200                        {object}        LibraryVO
+//        @Failure                400                        {object}        apiv.ErrorVO        "invalid body or invalid visibility value"
+//        @Failure                500                        {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/library/entries/{volume_id}/visibility [put]
 func setLibraryEntryVisibility(c *gin.Context) <span class="cov0" title="0">{
         var req visibilityRequest
@@ -2561,13 +3141,13 @@ func setLibraryEntryVisibility(c *gin.Context) <span class="cov0" title="0">{
 //        @Tags                        library
 //        @Accept                        json
 //        @Produce                json
-//        @Param                        user_id                path        string                        true        "User ID"
-//        @Param                        volume_id        path        string                        true        "Volume ID"
-//        @Param                        body                body        titleRequest        true        "New title"
-//        @Success                200                        {object}        interface{}
-//        @Failure                400                        {object}        interface{}
-//        @Failure                404                        {object}        interface{}
-//        @Failure                500                        {object}        interface{}
+//        @Param                        user_id                path                string                        true        "User ID"        example(user-123)
+//        @Param                        volume_id        path                string                        true        "Volume ID"        example(vol-123)
+//        @Param                        body                body                titleRequest        true        "New title"
+//        @Success                200                        {object}        LibraryVO
+//        @Failure                400                        {object}        apiv.ErrorVO                "title missing"
+//        @Failure                404                        {object}        map[string]interface{}        "no entry for this volume_id in the library"
+//        @Failure                500                        {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/library/entries/{volume_id}/title [put]
 func updateLibraryEntryTitle(c *gin.Context) <span class="cov0" title="0">{
         var req titleRequest
@@ -2590,15 +3170,15 @@ func updateLibraryEntryTitle(c *gin.Context) <span class="cov0" title="0">{
 // Set the library's default visibility.
 //
 //        @Summary                Set library default visibility
-//
+//        @Description        Set the visibility applied to library entries that have no per-entry override. Valid visibility values: public, friends, friends_of_friends, private.
 //        @Tags                        library
 //        @Accept                        json
 //        @Produce                json
-//        @Param                        user_id        path                string                                true        "User ID"
+//        @Param                        user_id        path                string                                true        "User ID"        example(user-123)
 //        @Param                        body        body                visibilityRequest        true        "New default visibility"
-//        @Success                200                {object}        interface{}
-//        @Failure                400                {object}        interface{}
-//        @Failure                500                {object}        interface{}
+//        @Success                200                {object}        LibraryVO
+//        @Failure                400                {object}        apiv.ErrorVO        "invalid body or invalid visibility value"
+//        @Failure                500                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/library/default-visibility [put]
 func setLibraryDefaultVisibility(c *gin.Context) <span class="cov0" title="0">{
         var req visibilityRequest
@@ -2621,11 +3201,11 @@ func setLibraryDefaultVisibility(c *gin.Context) <span class="cov0" title="0">{
 //        @Tags                        library
 //        @Accept                        json
 //        @Produce                json
-//        @Param                        user_id        path                string                                true        "User ID"
+//        @Param                        user_id        path                string                                true        "User ID"        example(user-123)
 //        @Param                        body        body                visibilityRequest        true        "Proposed new default visibility"
 //        @Success                200                {object}        previewResponse
-//        @Failure                400                {object}        interface{}
-//        @Failure                500                {object}        interface{}
+//        @Failure                400                {object}        apiv.ErrorVO        "invalid body or invalid visibility value"
+//        @Failure                500                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/library/default-visibility/preview [post]
 func previewLibraryDefaultVisibility(c *gin.Context) <span class="cov0" title="0">{
         var req visibilityRequest
@@ -2667,9 +3247,9 @@ import (
 // given, BorrowerName must also be supplied (the caller already has the linked user's display
 // name from its own user search - see design.md's borrower resolution decision).
 type createLoanRequest struct {
-        VolumeID       string  `json:"volume_id"`
-        BorrowerUserID *string `json:"borrower_user_id"`
-        BorrowerName   string  `json:"borrower_name"`
+        VolumeID       string  `json:"volume_id" example:"vol-123"`
+        BorrowerUserID *string `json:"borrower_user_id" example:"user-456"`
+        BorrowerName   string  `json:"borrower_name" example:"Jordan"`
 }
 
 // loanWriteFailure resolves a write's nil/false failure result into the right status: 403 if the
@@ -2705,9 +3285,9 @@ func setupLoanHandlers(g *gin.Engine, store persistence.CacheStore, ttls cachett
 //        @Description        List the volumes a user has lent out, both open and returned.
 //        @Tags                        loans
 //        @Produce                json
-//        @Param                        user_id        path                string        true        "User ID"
-//        @Success                200                {object}        interface{}
-//        @Failure                500                {object}        interface{}
+//        @Param                        user_id        path                string        true        "User ID"        example(user-123)
+//        @Success                200                {array}                LoanVO
+//        @Failure                500                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/loans [get]
 func listLoansLent(c *gin.Context) <span class="cov0" title="0">{
         loans, err := data.ListLoansLentBy(c.Request.Context(), c.Param("user_id"))
@@ -2728,9 +3308,9 @@ func listLoansLent(c *gin.Context) <span class="cov0" title="0">{
 //        @Description        List the volumes a platform-linked user has borrowed, both open and returned.
 //        @Tags                        loans
 //        @Produce                json
-//        @Param                        user_id        path                string        true        "User ID"
-//        @Success                200                {object}        interface{}
-//        @Failure                500                {object}        interface{}
+//        @Param                        user_id        path                string        true        "User ID"        example(user-456)
+//        @Success                200                {array}                LoanVO
+//        @Failure                500                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/loans/borrowed [get]
 func listLoansBorrowed(c *gin.Context) <span class="cov0" title="0">{
         loans, err := data.ListLoansBorrowedBy(c.Request.Context(), c.Param("user_id"))
@@ -2752,12 +3332,12 @@ func listLoansBorrowed(c *gin.Context) <span class="cov0" title="0">{
 //        @Tags                        loans
 //        @Accept                        json
 //        @Produce                json
-//        @Param                        user_id        path                string                                true        "User ID"
+//        @Param                        user_id        path                string                                true        "User ID (the lender)"        example(user-123)
 //        @Param                        body        body                createLoanRequest        true        "Loan details"
-//        @Success                200                {object}        interface{}
-//        @Failure                400                {object}        interface{}
-//        @Failure                409                {object}        interface{}
-//        @Failure                500                {object}        interface{}
+//        @Success                200                {object}        LoanVO
+//        @Failure                400                {object}        apiv.ErrorVO        "volume_id missing, or borrower fields don't satisfy the exactly-one-of rule"
+//        @Failure                409                {object}        apiv.ErrorVO        "volume is already out on an open loan"
+//        @Failure                500                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/loans [post]
 func createLoan(c *gin.Context) <span class="cov0" title="0">{
         var req createLoanRequest
@@ -2796,12 +3376,12 @@ func createLoan(c *gin.Context) <span class="cov0" title="0">{
 //        @Description        Mark a lent-out loan as returned. Lender-only.
 //        @Tags                        loans
 //        @Produce                json
-//        @Param                        user_id                path                string        true        "User ID"
-//        @Param                        loan_id                path                string        true        "Loan ID"
-//        @Success                200                        {object}        interface{}
-//        @Failure                403                        {object}        interface{}
-//        @Failure                404                        {object}        interface{}
-//        @Failure                500                        {object}        interface{}
+//        @Param                        user_id                path                string        true        "User ID (the lender)"        example(user-123)
+//        @Param                        loan_id                path                string        true        "Loan ID"                                example(loan-789)
+//        @Success                200                        {object}        LoanVO
+//        @Failure                403                        {object}        apiv.ErrorVO                "loan exists but is owned by a different lender"
+//        @Failure                404                        {object}        map[string]interface{}        "no loan with this ID exists"
+//        @Failure                500                        {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/loans/{loan_id}/return [post]
 func returnLoan(c *gin.Context) <span class="cov0" title="0">{
         loan, err := data.MarkLoanReturned(c.Request.Context(), c.Param("loan_id"), c.Param("user_id"), authz.Viewer(c))
@@ -2819,13 +3399,14 @@ func returnLoan(c *gin.Context) <span class="cov0" title="0">{
 // Delete a loan.
 //
 //        @Summary                Delete loan
+//        @Description        Permanently remove a loan record. Lender-only.
 //        @Tags                        loans
-//        @Param                        user_id                path        string        true        "User ID"
-//        @Param                        loan_id                path        string        true        "Loan ID"
+//        @Param                        user_id                path        string        true        "User ID (the lender)"        example(user-123)
+//        @Param                        loan_id                path        string        true        "Loan ID"                                example(loan-789)
 //        @Success                204
-//        @Failure                403        {object}        interface{}
-//        @Failure                404        {object}        interface{}
-//        @Failure                500        {object}        interface{}
+//        @Failure                403        {object}        apiv.ErrorVO                "loan exists but is owned by a different lender"
+//        @Failure                404        {object}        map[string]interface{}        "no loan with this ID exists"
+//        @Failure                500        {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/loans/{loan_id} [delete]
 func deleteLoan(c *gin.Context) <span class="cov0" title="0">{
         deleted, err := data.DeleteLoan(c.Request.Context(), c.Param("loan_id"), c.Param("user_id"), authz.Viewer(c))
@@ -2867,10 +3448,11 @@ func setupStatusHandlers(g *gin.Engine) <span class="cov0" title="0">{
 //
 //         Do a health check of the application and its dependencies and return the results
 //                @Summary                Health check
-//                @Description        Health check
+//                @Description        Check the application's own health plus its dependencies (database, cache). Returns 503 if any dependency check fails.
 //                @Tags                        status
 //                @Produce                json
 //                @Success                200                {object}        vo.HealthResponseVO
+//                @Failure                503                {object}        vo.HealthResponseVO        "one or more dependency checks failed"
 //                @Router                        /status/health [get]
 func healthHandler(c *gin.Context) <span class="cov0" title="0">{
         resp := apicores.HealthHandler(c.Request.Context())
@@ -2910,7 +3492,7 @@ import (
 )
 
 type createTableRequest struct {
-        Name string `json:"name"`
+        Name string `json:"name" example:"Friday night group"`
 }
 
 // tableWriteFailure resolves a write's nil/false failure result into the right status: 403 if
@@ -2950,9 +3532,9 @@ func setupTableHandlers(g *gin.Engine, store persistence.CacheStore, ttls cachet
 //        @Description        List a user's tables, filtered to what the caller may see.
 //        @Tags                        tables
 //        @Produce                json
-//        @Param                        user_id        path                string        true        "User ID"
-//        @Success                200                {object}        interface{}
-//        @Failure                500                {object}        interface{}
+//        @Param                        user_id        path                string        true        "User ID"        example(user-123)
+//        @Success                200                {array}                TableVO
+//        @Failure                500                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/tables [get]
 func listTables(c *gin.Context) <span class="cov0" title="0">{
         tables, err := data.ListTablesByUser(c.Request.Context(), c.Param("user_id"))
@@ -2973,13 +3555,14 @@ func listTables(c *gin.Context) <span class="cov0" title="0">{
 // Get one table.
 //
 //        @Summary                Get table
+//        @Description        Get one table by ID, if the caller may see it.
 //        @Tags                        tables
 //        @Produce                json
-//        @Param                        user_id        path                string        true        "User ID"
-//        @Param                        id                path                string        true        "Table ID"
-//        @Success                200                {object}        interface{}
-//        @Failure                404                {object}        interface{}
-//        @Failure                500                {object}        interface{}
+//        @Param                        user_id        path                string        true        "User ID"        example(user-123)
+//        @Param                        id                path                string        true        "Table ID"        example(tbl-789)
+//        @Success                200                {object}        TableVO
+//        @Failure                404                {object}        map[string]interface{}        "no table with this ID exists, or the caller may not see it"
+//        @Failure                500                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/tables/{id} [get]
 func getTable(c *gin.Context) <span class="cov0" title="0">{
         tbl, err := data.GetTable(c.Request.Context(), c.Param("id"))
@@ -3006,11 +3589,11 @@ func getTable(c *gin.Context) <span class="cov0" title="0">{
 //        @Tags                        tables
 //        @Accept                        json
 //        @Produce                json
-//        @Param                        user_id        path                string                                true        "User ID"
+//        @Param                        user_id        path                string                                true        "User ID"        example(user-123)
 //        @Param                        body        body                createTableRequest        true        "Table name"
-//        @Success                200                {object}        interface{}
-//        @Failure                400                {object}        interface{}
-//        @Failure                500                {object}        interface{}
+//        @Success                200                {object}        TableVO
+//        @Failure                400                {object}        apiv.ErrorVO        "name missing"
+//        @Failure                500                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/tables [post]
 func createTable(c *gin.Context) <span class="cov0" title="0">{
         var req createTableRequest
@@ -3029,15 +3612,18 @@ func createTable(c *gin.Context) <span class="cov0" title="0">{
 // Rename a table.
 //
 //        @Summary                Rename table
+//        @Description        Change a table's name. Owner-only.
 //        @Tags                        tables
 //        @Accept                        json
 //        @Produce                json
-//        @Param                        user_id        path                string                                true        "User ID"
-//        @Param                        id                path                string                                true        "Table ID"
+//        @Param                        user_id        path                string                                true        "User ID"        example(user-123)
+//        @Param                        id                path                string                                true        "Table ID"        example(tbl-789)
 //        @Param                        body        body                createTableRequest        true        "New name"
-//        @Success                200                {object}        interface{}
-//        @Failure                400                {object}        interface{}
-//        @Failure                500                {object}        interface{}
+//        @Success                200                {object}        TableVO
+//        @Failure                400                {object}        apiv.ErrorVO                "name missing"
+//        @Failure                403                {object}        apiv.ErrorVO                "table exists but is owned by a different user"
+//        @Failure                404                {object}        map[string]interface{}        "no table with this ID exists"
+//        @Failure                500                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/tables/{id} [put]
 func updateTableName(c *gin.Context) <span class="cov0" title="0">{
         var req createTableRequest
@@ -3060,11 +3646,14 @@ func updateTableName(c *gin.Context) <span class="cov0" title="0">{
 // Delete a table.
 //
 //        @Summary                Delete table
+//        @Description        Permanently remove a table. Owner-only.
 //        @Tags                        tables
-//        @Param                        user_id        path        string        true        "User ID"
-//        @Param                        id                path        string        true        "Table ID"
+//        @Param                        user_id        path        string        true        "User ID"        example(user-123)
+//        @Param                        id                path        string        true        "Table ID"        example(tbl-789)
 //        @Success                204
-//        @Failure                500        {object}        interface{}
+//        @Failure                403        {object}        apiv.ErrorVO                "table exists but is owned by a different user"
+//        @Failure                404        {object}        map[string]interface{}        "no table with this ID exists"
+//        @Failure                500        {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/tables/{id} [delete]
 func deleteTable(c *gin.Context) <span class="cov0" title="0">{
         deleted, err := data.DeleteTable(c.Request.Context(), c.Param("id"), c.Param("user_id"), authz.Viewer(c))
@@ -3082,15 +3671,18 @@ func deleteTable(c *gin.Context) <span class="cov0" title="0">{
 // Add a volume to a table.
 //
 //        @Summary                Add table volume
+//        @Description        Add a catalog volume to a table's shared pool. Owner-only.
 //        @Tags                        tables
 //        @Accept                        json
 //        @Produce                json
-//        @Param                        user_id        path                string                                true        "User ID"
-//        @Param                        id                path                string                                true        "Table ID"
+//        @Param                        user_id        path                string                                true        "User ID"        example(user-123)
+//        @Param                        id                path                string                                true        "Table ID"        example(tbl-789)
 //        @Param                        body        body                volumeEntryRequest        true        "Volume to add"
-//        @Success                200                {object}        interface{}
-//        @Failure                400                {object}        interface{}
-//        @Failure                500                {object}        interface{}
+//        @Success                200                {object}        TableVO
+//        @Failure                400                {object}        apiv.ErrorVO                "volume_id missing"
+//        @Failure                403                {object}        apiv.ErrorVO                "table exists but is owned by a different user"
+//        @Failure                404                {object}        map[string]interface{}        "no table with this ID exists"
+//        @Failure                500                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/tables/{id}/volumes [post]
 func addTableVolume(c *gin.Context) <span class="cov0" title="0">{
         var req volumeEntryRequest
@@ -3113,13 +3705,16 @@ func addTableVolume(c *gin.Context) <span class="cov0" title="0">{
 // Remove a volume from a table.
 //
 //        @Summary                Remove table volume
+//        @Description        Remove a catalog volume from a table's shared pool. Owner-only.
 //        @Tags                        tables
 //        @Produce                json
-//        @Param                        user_id                path                string        true        "User ID"
-//        @Param                        id                        path                string        true        "Table ID"
-//        @Param                        volume_id        path                string        true        "Volume ID"
-//        @Success                200                        {object}        interface{}
-//        @Failure                500                        {object}        interface{}
+//        @Param                        user_id                path                string        true        "User ID"        example(user-123)
+//        @Param                        id                        path                string        true        "Table ID"        example(tbl-789)
+//        @Param                        volume_id        path                string        true        "Volume ID"        example(vol-123)
+//        @Success                200                        {object}        TableVO
+//        @Failure                403                        {object}        apiv.ErrorVO                "table exists but is owned by a different user"
+//        @Failure                404                        {object}        map[string]interface{}        "no table with this ID exists"
+//        @Failure                500                        {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/tables/{id}/volumes/{volume_id} [delete]
 func removeTableVolume(c *gin.Context) <span class="cov0" title="0">{
         tbl, err := data.RemoveTableVolume(c.Request.Context(), c.Param("id"), c.Param("user_id"), c.Param("volume_id"), authz.Viewer(c))
@@ -3137,15 +3732,18 @@ func removeTableVolume(c *gin.Context) <span class="cov0" title="0">{
 // Set a table's visibility.
 //
 //        @Summary                Set table visibility
+//        @Description        Set a table's visibility. Owner-only. Valid visibility values: public, friends, friends_of_friends, private.
 //        @Tags                        tables
 //        @Accept                        json
 //        @Produce                json
-//        @Param                        user_id        path                string                                true        "User ID"
-//        @Param                        id                path                string                                true        "Table ID"
+//        @Param                        user_id        path                string                                true        "User ID"        example(user-123)
+//        @Param                        id                path                string                                true        "Table ID"        example(tbl-789)
 //        @Param                        body        body                visibilityRequest        true        "New visibility"
-//        @Success                200                {object}        interface{}
-//        @Failure                400                {object}        interface{}
-//        @Failure                500                {object}        interface{}
+//        @Success                200                {object}        TableVO
+//        @Failure                400                {object}        apiv.ErrorVO                "invalid body or invalid visibility value"
+//        @Failure                403                {object}        apiv.ErrorVO                "table exists but is owned by a different user"
+//        @Failure                404                {object}        map[string]interface{}        "no table with this ID exists"
+//        @Failure                500                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/tables/{id}/visibility [put]
 func setTableVisibility(c *gin.Context) <span class="cov0" title="0">{
         var req visibilityRequest
@@ -3181,7 +3779,7 @@ import (
 )
 
 type createWishlistRequest struct {
-        Name string `json:"name"`
+        Name string `json:"name" example:"Birthday wishlist"`
 }
 
 // wishlistWriteFailure resolves a write's nil/false failure result into the right status: 403
@@ -3220,9 +3818,9 @@ func setupWishlistHandlers(g *gin.Engine, store persistence.CacheStore, ttls cac
 //        @Description        List a user's wishlists, filtered to what the caller may see.
 //        @Tags                        wishlist
 //        @Produce                json
-//        @Param                        user_id        path                string        true        "User ID"
-//        @Success                200                {object}        interface{}
-//        @Failure                500                {object}        interface{}
+//        @Param                        user_id        path                string        true        "User ID"        example(user-123)
+//        @Success                200                {array}                WishlistVO
+//        @Failure                500                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/wishlists [get]
 func listWishlists(c *gin.Context) <span class="cov0" title="0">{
         wls, err := data.ListWishlistsByUser(c.Request.Context(), c.Param("user_id"))
@@ -3243,13 +3841,14 @@ func listWishlists(c *gin.Context) <span class="cov0" title="0">{
 // Get one wishlist.
 //
 //        @Summary                Get wishlist
+//        @Description        Get one wishlist by ID, if the caller may see it.
 //        @Tags                        wishlist
 //        @Produce                json
-//        @Param                        user_id                        path                string        true        "User ID"
-//        @Param                        wishlist_id                path                string        true        "Wishlist ID"
-//        @Success                200                                {object}        interface{}
-//        @Failure                404                                {object}        interface{}
-//        @Failure                500                                {object}        interface{}
+//        @Param                        user_id                        path                string        true        "User ID"                example(user-123)
+//        @Param                        wishlist_id                path                string        true        "Wishlist ID"        example(wl-789)
+//        @Success                200                                {object}        WishlistVO
+//        @Failure                404                                {object}        map[string]interface{}        "no wishlist with this ID exists, or the caller may not see it"
+//        @Failure                500                                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/wishlists/{wishlist_id} [get]
 func getWishlistByID(c *gin.Context) <span class="cov0" title="0">{
         wl, err := data.GetWishlist(c.Request.Context(), c.Param("wishlist_id"))
@@ -3276,11 +3875,11 @@ func getWishlistByID(c *gin.Context) <span class="cov0" title="0">{
 //        @Tags                        wishlist
 //        @Accept                        json
 //        @Produce                json
-//        @Param                        user_id        path                string                                        true        "User ID"
+//        @Param                        user_id        path                string                                        true        "User ID"        example(user-123)
 //        @Param                        body        body                createWishlistRequest        true        "Wishlist name"
-//        @Success                200                {object}        interface{}
-//        @Failure                400                {object}        interface{}
-//        @Failure                500                {object}        interface{}
+//        @Success                200                {object}        WishlistVO
+//        @Failure                400                {object}        apiv.ErrorVO        "name missing"
+//        @Failure                500                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/wishlists [post]
 func createWishlist(c *gin.Context) <span class="cov0" title="0">{
         var req createWishlistRequest
@@ -3299,11 +3898,14 @@ func createWishlist(c *gin.Context) <span class="cov0" title="0">{
 // Delete a wishlist.
 //
 //        @Summary                Delete wishlist
+//        @Description        Permanently remove a wishlist. Owner-only.
 //        @Tags                        wishlist
-//        @Param                        user_id                        path        string        true        "User ID"
-//        @Param                        wishlist_id                path        string        true        "Wishlist ID"
+//        @Param                        user_id                        path        string        true        "User ID"                example(user-123)
+//        @Param                        wishlist_id                path        string        true        "Wishlist ID"        example(wl-789)
 //        @Success                204
-//        @Failure                500        {object}        interface{}
+//        @Failure                403        {object}        apiv.ErrorVO                "wishlist exists but is owned by a different user"
+//        @Failure                404        {object}        map[string]interface{}        "no wishlist with this ID exists"
+//        @Failure                500        {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/wishlists/{wishlist_id} [delete]
 func deleteWishlist(c *gin.Context) <span class="cov0" title="0">{
         deleted, err := data.DeleteWishlist(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), authz.Viewer(c))
@@ -3321,15 +3923,18 @@ func deleteWishlist(c *gin.Context) <span class="cov0" title="0">{
 // Add a wishlist entry.
 //
 //        @Summary                Add wishlist entry
+//        @Description        Add a catalog volume to a wishlist. Owner-only.
 //        @Tags                        wishlist
 //        @Accept                        json
 //        @Produce                json
-//        @Param                        user_id                        path                string                                true        "User ID"
-//        @Param                        wishlist_id                path                string                                true        "Wishlist ID"
+//        @Param                        user_id                        path                string                                true        "User ID"                example(user-123)
+//        @Param                        wishlist_id                path                string                                true        "Wishlist ID"        example(wl-789)
 //        @Param                        body                        body                volumeEntryRequest        true        "Volume to add"
-//        @Success                200                                {object}        interface{}
-//        @Failure                400                                {object}        interface{}
-//        @Failure                500                                {object}        interface{}
+//        @Success                200                                {object}        WishlistVO
+//        @Failure                400                                {object}        apiv.ErrorVO                "volume_id missing"
+//        @Failure                403                                {object}        apiv.ErrorVO                "wishlist exists but is owned by a different user"
+//        @Failure                404                                {object}        map[string]interface{}        "no wishlist with this ID exists"
+//        @Failure                500                                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/wishlists/{wishlist_id}/entries [post]
 func addWishlistEntry(c *gin.Context) <span class="cov0" title="0">{
         var req volumeEntryRequest
@@ -3352,13 +3957,16 @@ func addWishlistEntry(c *gin.Context) <span class="cov0" title="0">{
 // Remove a wishlist entry.
 //
 //        @Summary                Remove wishlist entry
+//        @Description        Remove a catalog volume from a wishlist. Owner-only.
 //        @Tags                        wishlist
 //        @Produce                json
-//        @Param                        user_id                        path                string        true        "User ID"
-//        @Param                        wishlist_id                path                string        true        "Wishlist ID"
-//        @Param                        volume_id                path                string        true        "Volume ID"
-//        @Success                200                                {object}        interface{}
-//        @Failure                500                                {object}        interface{}
+//        @Param                        user_id                        path                string        true        "User ID"                example(user-123)
+//        @Param                        wishlist_id                path                string        true        "Wishlist ID"        example(wl-789)
+//        @Param                        volume_id                path                string        true        "Volume ID"                example(vol-123)
+//        @Success                200                                {object}        WishlistVO
+//        @Failure                403                                {object}        apiv.ErrorVO                "wishlist exists but is owned by a different user"
+//        @Failure                404                                {object}        map[string]interface{}        "no wishlist with this ID exists"
+//        @Failure                500                                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/wishlists/{wishlist_id}/entries/{volume_id} [delete]
 func removeWishlistEntry(c *gin.Context) <span class="cov0" title="0">{
         wl, err := data.RemoveWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), c.Param("volume_id"), authz.Viewer(c))
@@ -3376,15 +3984,18 @@ func removeWishlistEntry(c *gin.Context) <span class="cov0" title="0">{
 // Set the wishlist's visibility.
 //
 //        @Summary                Set wishlist visibility
+//        @Description        Set a wishlist's visibility. Owner-only. Valid visibility values: public, friends, friends_of_friends, private.
 //        @Tags                        wishlist
 //        @Accept                        json
 //        @Produce                json
-//        @Param                        user_id                        path                string                                true        "User ID"
-//        @Param                        wishlist_id                path                string                                true        "Wishlist ID"
+//        @Param                        user_id                        path                string                                true        "User ID"                example(user-123)
+//        @Param                        wishlist_id                path                string                                true        "Wishlist ID"        example(wl-789)
 //        @Param                        body                        body                visibilityRequest        true        "New visibility"
-//        @Success                200                                {object}        interface{}
-//        @Failure                400                                {object}        interface{}
-//        @Failure                500                                {object}        interface{}
+//        @Success                200                                {object}        WishlistVO
+//        @Failure                400                                {object}        apiv.ErrorVO                "invalid body or invalid visibility value"
+//        @Failure                403                                {object}        apiv.ErrorVO                "wishlist exists but is owned by a different user"
+//        @Failure                404                                {object}        map[string]interface{}        "no wishlist with this ID exists"
+//        @Failure                500                                {object}        apiv.ErrorVO
 //        @Router                        /users/{user_id}/wishlists/{wishlist_id}/visibility [put]
 func setWishlistVisibility(c *gin.Context) <span class="cov0" title="0">{
         var req visibilityRequest
