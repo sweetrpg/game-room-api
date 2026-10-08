@@ -7,25 +7,35 @@ import (
 	"github.com/gin-gonic/gin"
 	apiv "github.com/sweetrpg/api-core.go/vo"
 	"github.com/sweetrpg/game-room-objects.go/models"
+	govo "github.com/sweetrpg/game-room-objects.go/vo"
+)
+
+// Documentation-only aliases so swaggo can resolve concrete response schemas for @Success/
+// @Failure annotations without the server package otherwise needing to import game-room-objects.go/vo.
+type (
+	LoanVO     = govo.LoanVO
+	LibraryVO  = govo.LibraryVO
+	WishlistVO = govo.WishlistVO
+	TableVO    = govo.TableVO
 )
 
 // volumeEntryRequest is shared by the library, wishlist, and table add-entry endpoints. All
 // three capture volume_title as a denormalized snapshot for display without a catalog lookup.
 type volumeEntryRequest struct {
-	VolumeID    string `json:"volume_id"`
-	VolumeTitle string `json:"volume_title"`
+	VolumeID    string `json:"volume_id" example:"vol-123"`
+	VolumeTitle string `json:"volume_title" example:"Curse of Strahd"`
 }
 
 type visibilityRequest struct {
-	Visibility string `json:"visibility"`
+	Visibility string `json:"visibility" example:"friends"`
 }
 
 type titleRequest struct {
-	Title string `json:"title"`
+	Title string `json:"title" example:"Curse of Strahd (2nd printing)"`
 }
 
 type previewResponse struct {
-	AffectedVolumeIDs []string `json:"affected_volume_ids"`
+	AffectedVolumeIDs []string `json:"affected_volume_ids" example:"vol-123,vol-456"`
 }
 
 var validVisibilities = map[string]models.Visibility{

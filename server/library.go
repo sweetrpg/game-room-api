@@ -35,9 +35,9 @@ func setupLibraryHandlers(g *gin.Engine, store persistence.CacheStore, ttls cach
 //	@Description	Get a user's library, filtered to what the caller may see.
 //	@Tags			library
 //	@Produce		json
-//	@Param			user_id	path		string	true	"User ID"
-//	@Success		200		{object}	interface{}
-//	@Failure		500		{object}	interface{}
+//	@Param			user_id	path		string	true	"User ID"	example(user-123)
+//	@Success		200		{object}	LibraryVO
+//	@Failure		500		{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/library [get]
 func getLibrary(c *gin.Context) {
 	userID := c.Param("user_id")
@@ -59,11 +59,11 @@ func getLibrary(c *gin.Context) {
 //	@Tags			library
 //	@Accept			json
 //	@Produce		json
-//	@Param			user_id	path		string				true	"User ID"
+//	@Param			user_id	path		string				true	"User ID"	example(user-123)
 //	@Param			body	body		volumeEntryRequest	true	"Volume to add"
-//	@Success		200		{object}	interface{}
-//	@Failure		400		{object}	interface{}
-//	@Failure		500		{object}	interface{}
+//	@Success		200		{object}	LibraryVO
+//	@Failure		400		{object}	apiv.ErrorVO	"volume_id missing"
+//	@Failure		500		{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/library/entries [post]
 func addLibraryEntry(c *gin.Context) {
 	var req volumeEntryRequest
@@ -82,12 +82,13 @@ func addLibraryEntry(c *gin.Context) {
 // Remove a library entry.
 //
 //	@Summary		Remove library entry
+//	@Description	Unlink a catalog volume from the caller's own library.
 //	@Tags			library
 //	@Produce		json
-//	@Param			user_id		path		string	true	"User ID"
-//	@Param			volume_id	path		string	true	"Volume ID"
-//	@Success		200			{object}	interface{}
-//	@Failure		500			{object}	interface{}
+//	@Param			user_id		path		string	true	"User ID"	example(user-123)
+//	@Param			volume_id	path		string	true	"Volume ID"	example(vol-123)
+//	@Success		200			{object}	LibraryVO
+//	@Failure		500			{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/library/entries/{volume_id} [delete]
 func removeLibraryEntry(c *gin.Context) {
 	lib, err := data.RemoveLibraryEntry(c.Request.Context(), c.Param("user_id"), c.Param("volume_id"), authz.Viewer(c))
@@ -101,16 +102,16 @@ func removeLibraryEntry(c *gin.Context) {
 // Set a library entry's visibility override.
 //
 //	@Summary		Set library entry visibility override
-//	@Description	Set (or clear, with an empty visibility) a per-entry visibility override.
+//	@Description	Set (or clear, with an empty visibility) a per-entry visibility override. Valid visibility values: public, friends, friends_of_friends, private.
 //	@Tags			library
 //	@Accept			json
 //	@Produce		json
-//	@Param			user_id		path		string				true	"User ID"
-//	@Param			volume_id	path		string				true	"Volume ID"
+//	@Param			user_id		path		string				true	"User ID"	example(user-123)
+//	@Param			volume_id	path		string				true	"Volume ID"	example(vol-123)
 //	@Param			body		body		visibilityRequest	true	"New override (empty clears it)"
-//	@Success		200			{object}	interface{}
-//	@Failure		400			{object}	interface{}
-//	@Failure		500			{object}	interface{}
+//	@Success		200			{object}	LibraryVO
+//	@Failure		400			{object}	apiv.ErrorVO	"invalid body or invalid visibility value"
+//	@Failure		500			{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/library/entries/{volume_id}/visibility [put]
 func setLibraryEntryVisibility(c *gin.Context) {
 	var req visibilityRequest
@@ -144,13 +145,13 @@ func setLibraryEntryVisibility(c *gin.Context) {
 //	@Tags			library
 //	@Accept			json
 //	@Produce		json
-//	@Param			user_id		path	string			true	"User ID"
-//	@Param			volume_id	path	string			true	"Volume ID"
-//	@Param			body		body	titleRequest	true	"New title"
-//	@Success		200			{object}	interface{}
-//	@Failure		400			{object}	interface{}
-//	@Failure		404			{object}	interface{}
-//	@Failure		500			{object}	interface{}
+//	@Param			user_id		path		string			true	"User ID"	example(user-123)
+//	@Param			volume_id	path		string			true	"Volume ID"	example(vol-123)
+//	@Param			body		body		titleRequest	true	"New title"
+//	@Success		200			{object}	LibraryVO
+//	@Failure		400			{object}	apiv.ErrorVO		"title missing"
+//	@Failure		404			{object}	map[string]interface{}	"no entry for this volume_id in the library"
+//	@Failure		500			{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/library/entries/{volume_id}/title [put]
 func updateLibraryEntryTitle(c *gin.Context) {
 	var req titleRequest
@@ -173,15 +174,15 @@ func updateLibraryEntryTitle(c *gin.Context) {
 // Set the library's default visibility.
 //
 //	@Summary		Set library default visibility
-//
+//	@Description	Set the visibility applied to library entries that have no per-entry override. Valid visibility values: public, friends, friends_of_friends, private.
 //	@Tags			library
 //	@Accept			json
 //	@Produce		json
-//	@Param			user_id	path		string				true	"User ID"
+//	@Param			user_id	path		string				true	"User ID"	example(user-123)
 //	@Param			body	body		visibilityRequest	true	"New default visibility"
-//	@Success		200		{object}	interface{}
-//	@Failure		400		{object}	interface{}
-//	@Failure		500		{object}	interface{}
+//	@Success		200		{object}	LibraryVO
+//	@Failure		400		{object}	apiv.ErrorVO	"invalid body or invalid visibility value"
+//	@Failure		500		{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/library/default-visibility [put]
 func setLibraryDefaultVisibility(c *gin.Context) {
 	var req visibilityRequest
@@ -204,11 +205,11 @@ func setLibraryDefaultVisibility(c *gin.Context) {
 //	@Tags			library
 //	@Accept			json
 //	@Produce		json
-//	@Param			user_id	path		string				true	"User ID"
+//	@Param			user_id	path		string				true	"User ID"	example(user-123)
 //	@Param			body	body		visibilityRequest	true	"Proposed new default visibility"
 //	@Success		200		{object}	previewResponse
-//	@Failure		400		{object}	interface{}
-//	@Failure		500		{object}	interface{}
+//	@Failure		400		{object}	apiv.ErrorVO	"invalid body or invalid visibility value"
+//	@Failure		500		{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/library/default-visibility/preview [post]
 func previewLibraryDefaultVisibility(c *gin.Context) {
 	var req visibilityRequest
