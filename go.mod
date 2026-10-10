@@ -24,7 +24,7 @@ require (
 	github.com/sweetrpg/game-room-data.go v0.7.0
 	github.com/sweetrpg/game-room-objects.go v0.3.1
 	github.com/sweetrpg/mongodb.go v0.0.193
-	go.mongodb.org/mongo-driver v1.17.9
+	go.mongodb.org/mongo-driver v1.17.10
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.71.0
 )
 
