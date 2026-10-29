@@ -26,9 +26,9 @@ data:
   CACHE_TTLS: "library=30m,wishlist=30m,tables=15m"
   CACHE_DEFAULT_TTL: 1h
   # Per-client/IP rate limiting (platform rate-limiting capability, #106). api-core defaults.
-  RATE_LIMIT_CHEAP: "120"
+  RATE_LIMIT_CHEAP: "1200"
   RATE_LIMIT_CHEAP_WINDOW_SECONDS: "60"
-  RATE_LIMIT_STANDARD: "30"
+  RATE_LIMIT_STANDARD: "300"
   RATE_LIMIT_STANDARD_WINDOW_SECONDS: "60"
   INGRESS_BASE_PATH: /api/0/game-room
   INGRESS_HOST: dev.sweetrpg.com
