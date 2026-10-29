@@ -1,4 +1,19 @@
 
+## 0.13.0 - 2026-10-29
+
+### Added
+- Add dev PodMonitor so Prometheus scrapes /metrics
+
+
+### Documentation
+- Add per-endpoint examples and concrete response schemas
+
+
+### Fixed
+- Bump api-core.go to v0.4.0 and set explicit limits
+
+
+
 ## 0.12.0 - 2026-10-06
 
 ### Added
