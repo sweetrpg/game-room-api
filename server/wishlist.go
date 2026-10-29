@@ -13,7 +13,7 @@ import (
 )
 
 type createWishlistRequest struct {
-	Name string `json:"name"`
+	Name string `json:"name" example:"Birthday wishlist"`
 }
 
 // wishlistWriteFailure resolves a write's nil/false failure result into the right status: 403
@@ -52,9 +52,9 @@ func setupWishlistHandlers(g *gin.Engine, store persistence.CacheStore, ttls cac
 //	@Description	List a user's wishlists, filtered to what the caller may see.
 //	@Tags			wishlist
 //	@Produce		json
-//	@Param			user_id	path		string	true	"User ID"
-//	@Success		200		{object}	interface{}
-//	@Failure		500		{object}	interface{}
+//	@Param			user_id	path		string	true	"User ID"	example(user-123)
+//	@Success		200		{array}		WishlistVO
+//	@Failure		500		{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/wishlists [get]
 func listWishlists(c *gin.Context) {
 	wls, err := data.ListWishlistsByUser(c.Request.Context(), c.Param("user_id"))
@@ -75,13 +75,14 @@ func listWishlists(c *gin.Context) {
 // Get one wishlist.
 //
 //	@Summary		Get wishlist
+//	@Description	Get one wishlist by ID, if the caller may see it.
 //	@Tags			wishlist
 //	@Produce		json
-//	@Param			user_id			path		string	true	"User ID"
-//	@Param			wishlist_id		path		string	true	"Wishlist ID"
-//	@Success		200				{object}	interface{}
-//	@Failure		404				{object}	interface{}
-//	@Failure		500				{object}	interface{}
+//	@Param			user_id			path		string	true	"User ID"		example(user-123)
+//	@Param			wishlist_id		path		string	true	"Wishlist ID"	example(wl-789)
+//	@Success		200				{object}	WishlistVO
+//	@Failure		404				{object}	map[string]interface{}	"no wishlist with this ID exists, or the caller may not see it"
+//	@Failure		500				{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/wishlists/{wishlist_id} [get]
 func getWishlistByID(c *gin.Context) {
 	wl, err := data.GetWishlist(c.Request.Context(), c.Param("wishlist_id"))
@@ -108,11 +109,11 @@ func getWishlistByID(c *gin.Context) {
 //	@Tags			wishlist
 //	@Accept			json
 //	@Produce		json
-//	@Param			user_id	path		string					true	"User ID"
+//	@Param			user_id	path		string					true	"User ID"	example(user-123)
 //	@Param			body	body		createWishlistRequest	true	"Wishlist name"
-//	@Success		200		{object}	interface{}
-//	@Failure		400		{object}	interface{}
-//	@Failure		500		{object}	interface{}
+//	@Success		200		{object}	WishlistVO
+//	@Failure		400		{object}	apiv.ErrorVO	"name missing"
+//	@Failure		500		{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/wishlists [post]
 func createWishlist(c *gin.Context) {
 	var req createWishlistRequest
@@ -131,11 +132,14 @@ func createWishlist(c *gin.Context) {
 // Delete a wishlist.
 //
 //	@Summary		Delete wishlist
+//	@Description	Permanently remove a wishlist. Owner-only.
 //	@Tags			wishlist
-//	@Param			user_id			path	string	true	"User ID"
-//	@Param			wishlist_id		path	string	true	"Wishlist ID"
+//	@Param			user_id			path	string	true	"User ID"		example(user-123)
+//	@Param			wishlist_id		path	string	true	"Wishlist ID"	example(wl-789)
 //	@Success		204
-//	@Failure		500	{object}	interface{}
+//	@Failure		403	{object}	apiv.ErrorVO		"wishlist exists but is owned by a different user"
+//	@Failure		404	{object}	map[string]interface{}	"no wishlist with this ID exists"
+//	@Failure		500	{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/wishlists/{wishlist_id} [delete]
 func deleteWishlist(c *gin.Context) {
 	deleted, err := data.DeleteWishlist(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), authz.Viewer(c))
@@ -153,15 +157,18 @@ func deleteWishlist(c *gin.Context) {
 // Add a wishlist entry.
 //
 //	@Summary		Add wishlist entry
+//	@Description	Add a catalog volume to a wishlist. Owner-only.
 //	@Tags			wishlist
 //	@Accept			json
 //	@Produce		json
-//	@Param			user_id			path		string				true	"User ID"
-//	@Param			wishlist_id		path		string				true	"Wishlist ID"
+//	@Param			user_id			path		string				true	"User ID"		example(user-123)
+//	@Param			wishlist_id		path		string				true	"Wishlist ID"	example(wl-789)
 //	@Param			body			body		volumeEntryRequest	true	"Volume to add"
-//	@Success		200				{object}	interface{}
-//	@Failure		400				{object}	interface{}
-//	@Failure		500				{object}	interface{}
+//	@Success		200				{object}	WishlistVO
+//	@Failure		400				{object}	apiv.ErrorVO		"volume_id missing"
+//	@Failure		403				{object}	apiv.ErrorVO		"wishlist exists but is owned by a different user"
+//	@Failure		404				{object}	map[string]interface{}	"no wishlist with this ID exists"
+//	@Failure		500				{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/wishlists/{wishlist_id}/entries [post]
 func addWishlistEntry(c *gin.Context) {
 	var req volumeEntryRequest
@@ -184,13 +191,16 @@ func addWishlistEntry(c *gin.Context) {
 // Remove a wishlist entry.
 //
 //	@Summary		Remove wishlist entry
+//	@Description	Remove a catalog volume from a wishlist. Owner-only.
 //	@Tags			wishlist
 //	@Produce		json
-//	@Param			user_id			path		string	true	"User ID"
-//	@Param			wishlist_id		path		string	true	"Wishlist ID"
-//	@Param			volume_id		path		string	true	"Volume ID"
-//	@Success		200				{object}	interface{}
-//	@Failure		500				{object}	interface{}
+//	@Param			user_id			path		string	true	"User ID"		example(user-123)
+//	@Param			wishlist_id		path		string	true	"Wishlist ID"	example(wl-789)
+//	@Param			volume_id		path		string	true	"Volume ID"		example(vol-123)
+//	@Success		200				{object}	WishlistVO
+//	@Failure		403				{object}	apiv.ErrorVO		"wishlist exists but is owned by a different user"
+//	@Failure		404				{object}	map[string]interface{}	"no wishlist with this ID exists"
+//	@Failure		500				{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/wishlists/{wishlist_id}/entries/{volume_id} [delete]
 func removeWishlistEntry(c *gin.Context) {
 	wl, err := data.RemoveWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), c.Param("volume_id"), authz.Viewer(c))
@@ -208,15 +218,18 @@ func removeWishlistEntry(c *gin.Context) {
 // Set the wishlist's visibility.
 //
 //	@Summary		Set wishlist visibility
+//	@Description	Set a wishlist's visibility. Owner-only. Valid visibility values: public, friends, friends_of_friends, private.
 //	@Tags			wishlist
 //	@Accept			json
 //	@Produce		json
-//	@Param			user_id			path		string				true	"User ID"
-//	@Param			wishlist_id		path		string				true	"Wishlist ID"
+//	@Param			user_id			path		string				true	"User ID"		example(user-123)
+//	@Param			wishlist_id		path		string				true	"Wishlist ID"	example(wl-789)
 //	@Param			body			body		visibilityRequest	true	"New visibility"
-//	@Success		200				{object}	interface{}
-//	@Failure		400				{object}	interface{}
-//	@Failure		500				{object}	interface{}
+//	@Success		200				{object}	WishlistVO
+//	@Failure		400				{object}	apiv.ErrorVO		"invalid body or invalid visibility value"
+//	@Failure		403				{object}	apiv.ErrorVO		"wishlist exists but is owned by a different user"
+//	@Failure		404				{object}	map[string]interface{}	"no wishlist with this ID exists"
+//	@Failure		500				{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/wishlists/{wishlist_id}/visibility [put]
 func setWishlistVisibility(c *gin.Context) {
 	var req visibilityRequest

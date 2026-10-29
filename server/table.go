@@ -13,7 +13,7 @@ import (
 )
 
 type createTableRequest struct {
-	Name string `json:"name"`
+	Name string `json:"name" example:"Friday night group"`
 }
 
 // tableWriteFailure resolves a write's nil/false failure result into the right status: 403 if
@@ -53,9 +53,9 @@ func setupTableHandlers(g *gin.Engine, store persistence.CacheStore, ttls cachet
 //	@Description	List a user's tables, filtered to what the caller may see.
 //	@Tags			tables
 //	@Produce		json
-//	@Param			user_id	path		string	true	"User ID"
-//	@Success		200		{object}	interface{}
-//	@Failure		500		{object}	interface{}
+//	@Param			user_id	path		string	true	"User ID"	example(user-123)
+//	@Success		200		{array}		TableVO
+//	@Failure		500		{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/tables [get]
 func listTables(c *gin.Context) {
 	tables, err := data.ListTablesByUser(c.Request.Context(), c.Param("user_id"))
@@ -76,13 +76,14 @@ func listTables(c *gin.Context) {
 // Get one table.
 //
 //	@Summary		Get table
+//	@Description	Get one table by ID, if the caller may see it.
 //	@Tags			tables
 //	@Produce		json
-//	@Param			user_id	path		string	true	"User ID"
-//	@Param			id		path		string	true	"Table ID"
-//	@Success		200		{object}	interface{}
-//	@Failure		404		{object}	interface{}
-//	@Failure		500		{object}	interface{}
+//	@Param			user_id	path		string	true	"User ID"	example(user-123)
+//	@Param			id		path		string	true	"Table ID"	example(tbl-789)
+//	@Success		200		{object}	TableVO
+//	@Failure		404		{object}	map[string]interface{}	"no table with this ID exists, or the caller may not see it"
+//	@Failure		500		{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/tables/{id} [get]
 func getTable(c *gin.Context) {
 	tbl, err := data.GetTable(c.Request.Context(), c.Param("id"))
@@ -109,11 +110,11 @@ func getTable(c *gin.Context) {
 //	@Tags			tables
 //	@Accept			json
 //	@Produce		json
-//	@Param			user_id	path		string				true	"User ID"
+//	@Param			user_id	path		string				true	"User ID"	example(user-123)
 //	@Param			body	body		createTableRequest	true	"Table name"
-//	@Success		200		{object}	interface{}
-//	@Failure		400		{object}	interface{}
-//	@Failure		500		{object}	interface{}
+//	@Success		200		{object}	TableVO
+//	@Failure		400		{object}	apiv.ErrorVO	"name missing"
+//	@Failure		500		{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/tables [post]
 func createTable(c *gin.Context) {
 	var req createTableRequest
@@ -132,15 +133,18 @@ func createTable(c *gin.Context) {
 // Rename a table.
 //
 //	@Summary		Rename table
+//	@Description	Change a table's name. Owner-only.
 //	@Tags			tables
 //	@Accept			json
 //	@Produce		json
-//	@Param			user_id	path		string				true	"User ID"
-//	@Param			id		path		string				true	"Table ID"
+//	@Param			user_id	path		string				true	"User ID"	example(user-123)
+//	@Param			id		path		string				true	"Table ID"	example(tbl-789)
 //	@Param			body	body		createTableRequest	true	"New name"
-//	@Success		200		{object}	interface{}
-//	@Failure		400		{object}	interface{}
-//	@Failure		500		{object}	interface{}
+//	@Success		200		{object}	TableVO
+//	@Failure		400		{object}	apiv.ErrorVO		"name missing"
+//	@Failure		403		{object}	apiv.ErrorVO		"table exists but is owned by a different user"
+//	@Failure		404		{object}	map[string]interface{}	"no table with this ID exists"
+//	@Failure		500		{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/tables/{id} [put]
 func updateTableName(c *gin.Context) {
 	var req createTableRequest
@@ -163,11 +167,14 @@ func updateTableName(c *gin.Context) {
 // Delete a table.
 //
 //	@Summary		Delete table
+//	@Description	Permanently remove a table. Owner-only.
 //	@Tags			tables
-//	@Param			user_id	path	string	true	"User ID"
-//	@Param			id		path	string	true	"Table ID"
+//	@Param			user_id	path	string	true	"User ID"	example(user-123)
+//	@Param			id		path	string	true	"Table ID"	example(tbl-789)
 //	@Success		204
-//	@Failure		500	{object}	interface{}
+//	@Failure		403	{object}	apiv.ErrorVO		"table exists but is owned by a different user"
+//	@Failure		404	{object}	map[string]interface{}	"no table with this ID exists"
+//	@Failure		500	{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/tables/{id} [delete]
 func deleteTable(c *gin.Context) {
 	deleted, err := data.DeleteTable(c.Request.Context(), c.Param("id"), c.Param("user_id"), authz.Viewer(c))
@@ -185,15 +192,18 @@ func deleteTable(c *gin.Context) {
 // Add a volume to a table.
 //
 //	@Summary		Add table volume
+//	@Description	Add a catalog volume to a table's shared pool. Owner-only.
 //	@Tags			tables
 //	@Accept			json
 //	@Produce		json
-//	@Param			user_id	path		string				true	"User ID"
-//	@Param			id		path		string				true	"Table ID"
+//	@Param			user_id	path		string				true	"User ID"	example(user-123)
+//	@Param			id		path		string				true	"Table ID"	example(tbl-789)
 //	@Param			body	body		volumeEntryRequest	true	"Volume to add"
-//	@Success		200		{object}	interface{}
-//	@Failure		400		{object}	interface{}
-//	@Failure		500		{object}	interface{}
+//	@Success		200		{object}	TableVO
+//	@Failure		400		{object}	apiv.ErrorVO		"volume_id missing"
+//	@Failure		403		{object}	apiv.ErrorVO		"table exists but is owned by a different user"
+//	@Failure		404		{object}	map[string]interface{}	"no table with this ID exists"
+//	@Failure		500		{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/tables/{id}/volumes [post]
 func addTableVolume(c *gin.Context) {
 	var req volumeEntryRequest
@@ -216,13 +226,16 @@ func addTableVolume(c *gin.Context) {
 // Remove a volume from a table.
 //
 //	@Summary		Remove table volume
+//	@Description	Remove a catalog volume from a table's shared pool. Owner-only.
 //	@Tags			tables
 //	@Produce		json
-//	@Param			user_id		path		string	true	"User ID"
-//	@Param			id			path		string	true	"Table ID"
-//	@Param			volume_id	path		string	true	"Volume ID"
-//	@Success		200			{object}	interface{}
-//	@Failure		500			{object}	interface{}
+//	@Param			user_id		path		string	true	"User ID"	example(user-123)
+//	@Param			id			path		string	true	"Table ID"	example(tbl-789)
+//	@Param			volume_id	path		string	true	"Volume ID"	example(vol-123)
+//	@Success		200			{object}	TableVO
+//	@Failure		403			{object}	apiv.ErrorVO		"table exists but is owned by a different user"
+//	@Failure		404			{object}	map[string]interface{}	"no table with this ID exists"
+//	@Failure		500			{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/tables/{id}/volumes/{volume_id} [delete]
 func removeTableVolume(c *gin.Context) {
 	tbl, err := data.RemoveTableVolume(c.Request.Context(), c.Param("id"), c.Param("user_id"), c.Param("volume_id"), authz.Viewer(c))
@@ -240,15 +253,18 @@ func removeTableVolume(c *gin.Context) {
 // Set a table's visibility.
 //
 //	@Summary		Set table visibility
+//	@Description	Set a table's visibility. Owner-only. Valid visibility values: public, friends, friends_of_friends, private.
 //	@Tags			tables
 //	@Accept			json
 //	@Produce		json
-//	@Param			user_id	path		string				true	"User ID"
-//	@Param			id		path		string				true	"Table ID"
+//	@Param			user_id	path		string				true	"User ID"	example(user-123)
+//	@Param			id		path		string				true	"Table ID"	example(tbl-789)
 //	@Param			body	body		visibilityRequest	true	"New visibility"
-//	@Success		200		{object}	interface{}
-//	@Failure		400		{object}	interface{}
-//	@Failure		500		{object}	interface{}
+//	@Success		200		{object}	TableVO
+//	@Failure		400		{object}	apiv.ErrorVO		"invalid body or invalid visibility value"
+//	@Failure		403		{object}	apiv.ErrorVO		"table exists but is owned by a different user"
+//	@Failure		404		{object}	map[string]interface{}	"no table with this ID exists"
+//	@Failure		500		{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/tables/{id}/visibility [put]
 func setTableVisibility(c *gin.Context) {
 	var req visibilityRequest

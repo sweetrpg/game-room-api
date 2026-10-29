@@ -17,9 +17,9 @@ import (
 // given, BorrowerName must also be supplied (the caller already has the linked user's display
 // name from its own user search - see design.md's borrower resolution decision).
 type createLoanRequest struct {
-	VolumeID       string  `json:"volume_id"`
-	BorrowerUserID *string `json:"borrower_user_id"`
-	BorrowerName   string  `json:"borrower_name"`
+	VolumeID       string  `json:"volume_id" example:"vol-123"`
+	BorrowerUserID *string `json:"borrower_user_id" example:"user-456"`
+	BorrowerName   string  `json:"borrower_name" example:"Jordan"`
 }
 
 // loanWriteFailure resolves a write's nil/false failure result into the right status: 403 if the
@@ -55,9 +55,9 @@ func setupLoanHandlers(g *gin.Engine, store persistence.CacheStore, ttls cachett
 //	@Description	List the volumes a user has lent out, both open and returned.
 //	@Tags			loans
 //	@Produce		json
-//	@Param			user_id	path		string	true	"User ID"
-//	@Success		200		{object}	interface{}
-//	@Failure		500		{object}	interface{}
+//	@Param			user_id	path		string	true	"User ID"	example(user-123)
+//	@Success		200		{array}		LoanVO
+//	@Failure		500		{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/loans [get]
 func listLoansLent(c *gin.Context) {
 	loans, err := data.ListLoansLentBy(c.Request.Context(), c.Param("user_id"))
@@ -78,9 +78,9 @@ func listLoansLent(c *gin.Context) {
 //	@Description	List the volumes a platform-linked user has borrowed, both open and returned.
 //	@Tags			loans
 //	@Produce		json
-//	@Param			user_id	path		string	true	"User ID"
-//	@Success		200		{object}	interface{}
-//	@Failure		500		{object}	interface{}
+//	@Param			user_id	path		string	true	"User ID"	example(user-456)
+//	@Success		200		{array}		LoanVO
+//	@Failure		500		{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/loans/borrowed [get]
 func listLoansBorrowed(c *gin.Context) {
 	loans, err := data.ListLoansBorrowedBy(c.Request.Context(), c.Param("user_id"))
@@ -102,12 +102,12 @@ func listLoansBorrowed(c *gin.Context) {
 //	@Tags			loans
 //	@Accept			json
 //	@Produce		json
-//	@Param			user_id	path		string				true	"User ID"
+//	@Param			user_id	path		string				true	"User ID (the lender)"	example(user-123)
 //	@Param			body	body		createLoanRequest	true	"Loan details"
-//	@Success		200		{object}	interface{}
-//	@Failure		400		{object}	interface{}
-//	@Failure		409		{object}	interface{}
-//	@Failure		500		{object}	interface{}
+//	@Success		200		{object}	LoanVO
+//	@Failure		400		{object}	apiv.ErrorVO	"volume_id missing, or borrower fields don't satisfy the exactly-one-of rule"
+//	@Failure		409		{object}	apiv.ErrorVO	"volume is already out on an open loan"
+//	@Failure		500		{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/loans [post]
 func createLoan(c *gin.Context) {
 	var req createLoanRequest
@@ -146,12 +146,12 @@ func createLoan(c *gin.Context) {
 //	@Description	Mark a lent-out loan as returned. Lender-only.
 //	@Tags			loans
 //	@Produce		json
-//	@Param			user_id		path		string	true	"User ID"
-//	@Param			loan_id		path		string	true	"Loan ID"
-//	@Success		200			{object}	interface{}
-//	@Failure		403			{object}	interface{}
-//	@Failure		404			{object}	interface{}
-//	@Failure		500			{object}	interface{}
+//	@Param			user_id		path		string	true	"User ID (the lender)"	example(user-123)
+//	@Param			loan_id		path		string	true	"Loan ID"				example(loan-789)
+//	@Success		200			{object}	LoanVO
+//	@Failure		403			{object}	apiv.ErrorVO		"loan exists but is owned by a different lender"
+//	@Failure		404			{object}	map[string]interface{}	"no loan with this ID exists"
+//	@Failure		500			{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/loans/{loan_id}/return [post]
 func returnLoan(c *gin.Context) {
 	loan, err := data.MarkLoanReturned(c.Request.Context(), c.Param("loan_id"), c.Param("user_id"), authz.Viewer(c))
@@ -169,13 +169,14 @@ func returnLoan(c *gin.Context) {
 // Delete a loan.
 //
 //	@Summary		Delete loan
+//	@Description	Permanently remove a loan record. Lender-only.
 //	@Tags			loans
-//	@Param			user_id		path	string	true	"User ID"
-//	@Param			loan_id		path	string	true	"Loan ID"
+//	@Param			user_id		path	string	true	"User ID (the lender)"	example(user-123)
+//	@Param			loan_id		path	string	true	"Loan ID"				example(loan-789)
 //	@Success		204
-//	@Failure		403	{object}	interface{}
-//	@Failure		404	{object}	interface{}
-//	@Failure		500	{object}	interface{}
+//	@Failure		403	{object}	apiv.ErrorVO		"loan exists but is owned by a different lender"
+//	@Failure		404	{object}	map[string]interface{}	"no loan with this ID exists"
+//	@Failure		500	{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/loans/{loan_id} [delete]
 func deleteLoan(c *gin.Context) {
 	deleted, err := data.DeleteLoan(c.Request.Context(), c.Param("loan_id"), c.Param("user_id"), authz.Viewer(c))
