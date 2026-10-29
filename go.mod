@@ -10,7 +10,7 @@ require (
 	github.com/gomodule/redigo v1.9.3
 	github.com/grafana/pyroscope-go v1.4.2
 	github.com/joho/godotenv v1.5.1
-	github.com/nats-io/nats-server/v2 v2.14.6
+	github.com/nats-io/nats-server/v2 v2.15.1
 	github.com/nats-io/nats.go v1.53.1
 	github.com/penglongli/gin-metrics v0.1.13
 	github.com/samber/slog-gin v1.21.1
@@ -35,7 +35,7 @@ require (
 	connectrpc.com/connect v1.19.1 // indirect
 	connectrpc.com/otelconnect v0.7.2 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
-	github.com/antithesishq/antithesis-sdk-go v0.7.2-default-no-op // indirect
+	github.com/antithesishq/antithesis-sdk-go v0.8.0-default-no-op // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.2.0 // indirect
 	github.com/bradfitz/gomemcache v0.0.0-20250403215159-8d39553ac7cf // indirect
@@ -131,7 +131,7 @@ require (
 	golang.org/x/sync v0.23.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
-	golang.org/x/time v0.15.0 // indirect
+	golang.org/x/time v0.16.0 // indirect
 	golang.org/x/tools v0.49.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260720211330-0afa2a65878a // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260720211330-0afa2a65878a // indirect
