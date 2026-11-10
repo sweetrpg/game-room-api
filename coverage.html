@@ -1,0 +1,4048 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>cachettl: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/sweetrpg/game-room-api/cachettl/cachettl.go (100.0%)</option>
+				
+				<option value="file1">github.com/sweetrpg/game-room-api/cmd/consumer/main.go (0.0%)</option>
+				
+				<option value="file2">github.com/sweetrpg/game-room-api/cmd/game-room-api/main.go (0.0%)</option>
+				
+				<option value="file3">github.com/sweetrpg/game-room-api/cmd/migrate-table-volume-titles/main.go (0.0%)</option>
+				
+				<option value="file4">github.com/sweetrpg/game-room-api/cmd/migrate-wishlist-names/main.go (0.0%)</option>
+				
+				<option value="file5">github.com/sweetrpg/game-room-api/docs/docs.go (0.0%)</option>
+				
+				<option value="file6">github.com/sweetrpg/game-room-api/internal/consumer/consumer.go (75.0%)</option>
+				
+				<option value="file7">github.com/sweetrpg/game-room-api/internal/consumer/handler.go (7.3%)</option>
+				
+				<option value="file8">github.com/sweetrpg/game-room-api/readiness/readiness.go (0.0%)</option>
+				
+				<option value="file9">github.com/sweetrpg/game-room-api/server/common.go (0.0%)</option>
+				
+				<option value="file10">github.com/sweetrpg/game-room-api/server/handlers.go (0.0%)</option>
+				
+				<option value="file11">github.com/sweetrpg/game-room-api/server/library.go (0.0%)</option>
+				
+				<option value="file12">github.com/sweetrpg/game-room-api/server/loan.go (0.0%)</option>
+				
+				<option value="file13">github.com/sweetrpg/game-room-api/server/status.go (0.0%)</option>
+				
+				<option value="file14">github.com/sweetrpg/game-room-api/server/table.go (0.0%)</option>
+				
+				<option value="file15">github.com/sweetrpg/game-room-api/server/wishlist.go (0.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">no coverage</span>
+				<span class="cov1">low coverage</span>
+				<span class="cov2">*</span>
+				<span class="cov3">*</span>
+				<span class="cov4">*</span>
+				<span class="cov5">*</span>
+				<span class="cov6">*</span>
+				<span class="cov7">*</span>
+				<span class="cov8">*</span>
+				<span class="cov9">*</span>
+				<span class="cov10">high coverage</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">// Package cachettl resolves the cache TTL for a given route group, loaded once at startup
+// from the CACHE_TTLS env var so slower-changing entities and faster-changing ones aren't
+// forced onto the same cache policy.
+package cachettl
+
+import (
+        "strings"
+        "time"
+
+        "github.com/sweetrpg/common.go/logging"
+        "github.com/sweetrpg/common.go/util"
+        "github.com/sweetrpg/game-room-api/constants"
+)
+
+const defaultTTLFallback = time.Hour
+
+// Config resolves a per-route-group TTL, falling back to a configured default for any route
+// group without an explicit entry.
+type Config struct {
+        ttls       map[string]time.Duration
+        defaultTTL time.Duration
+}
+
+// Load parses CACHE_TTLS ("route=duration,route=duration", e.g. "licenses=30m,volumes=15m")
+// and CACHE_DEFAULT_TTL (a single duration string) from the environment. Malformed entries are
+// logged and skipped rather than failing startup.
+func Load() Config <span class="cov7" title="5">{
+        defaultTTL := defaultTTLFallback
+        if raw := util.GetEnv(constants.CACHE_DEFAULT_TTL, ""); raw != "" </span><span class="cov3" title="2">{
+                if d, err := time.ParseDuration(raw); err == nil </span><span class="cov1" title="1">{
+                        defaultTTL = d
+                }</span> else<span class="cov1" title="1"> {
+                        logging.Logger.Warn("Invalid CACHE_DEFAULT_TTL, using fallback default",
+                                "value", raw, "fallback", defaultTTLFallback.String(), "error", err.Error())
+                }</span>
+        }
+
+        <span class="cov7" title="5">ttls := map[string]time.Duration{}
+        raw := util.GetEnv(constants.CACHE_TTLS, "")
+        for _, entry := range strings.Split(raw, ",") </span><span class="cov10" title="9">{
+                entry = strings.TrimSpace(entry)
+                if entry == "" </span><span class="cov3" title="2">{
+                        continue</span>
+                }
+                <span class="cov8" title="7">route, value, found := strings.Cut(entry, "=")
+                if !found </span><span class="cov1" title="1">{
+                        logging.Logger.Warn("Invalid CACHE_TTLS entry, expected route=duration", "entry", entry)
+                        continue</span>
+                }
+                <span class="cov8" title="6">d, err := time.ParseDuration(strings.TrimSpace(value))
+                if err != nil </span><span class="cov1" title="1">{
+                        logging.Logger.Warn("Invalid CACHE_TTLS duration, skipping entry",
+                                "entry", entry, "error", err.Error())
+                        continue</span>
+                }
+                <span class="cov7" title="5">ttls[strings.TrimSpace(route)] = d</span>
+        }
+
+        <span class="cov7" title="5">return Config{ttls: ttls, defaultTTL: defaultTTL}</span>
+}
+
+// TTL returns the configured TTL for the given route group, or the configured default if the
+// route group has no explicit entry.
+func (c Config) TTL(route string) time.Duration <span class="cov9" title="8">{
+        if d, ok := c.ttls[route]; ok </span><span class="cov6" title="4">{
+                return d
+        }</span>
+        <span class="cov6" title="4">return c.defaultTTL</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package main
+
+import (
+        "context"
+        "log"
+        "os"
+        "os/signal"
+        "syscall"
+        "time"
+
+        "github.com/joho/godotenv"
+        "github.com/sweetrpg/common.go/logging"
+        "github.com/sweetrpg/game-room-api/internal/consumer"
+        "github.com/sweetrpg/mongodb.go/database"
+)
+
+func main() <span class="cov0" title="0">{
+        _ = godotenv.Load(".env")
+
+        logging.Init()
+
+        // Setup database connection
+        database.SetupDatabase()
+        defer database.TeardownDatabase()
+
+        // Standalone runs (local dev) have no cache to invalidate; the in-process worker in
+        // cmd/game-room-api passes the API's real store. A nil store is handled as a no-op.
+        handler := consumer.NewVolumeEventHandler(nil)
+
+        // Create and start the consumer
+        c := consumer.New(handler)
+        if err := c.Start(context.Background()); err != nil </span><span class="cov0" title="0">{
+                log.Fatalf("Failed to start consumer: %v", err)
+        }</span>
+
+        // Wait for interrupt signal
+        <span class="cov0" title="0">sigChan := make(chan os.Signal, 1)
+        signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+        &lt;-sigChan
+
+        // Graceful shutdown
+        ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+        defer cancel()
+
+        if err := c.Stop(ctx); err != nil </span><span class="cov0" title="0">{
+                log.Fatalf("Failed to stop consumer: %v", err)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package main
+
+import (
+        "context"
+        "fmt"
+        "log"
+        "log/slog"
+        "net/http"
+        "os"
+        "strconv"
+        "strings"
+        "time"
+
+        "github.com/getsentry/sentry-go"
+        "github.com/gin-contrib/cache/persistence"
+        "github.com/gin-contrib/cors"
+        "github.com/gin-gonic/gin"
+        "github.com/gomodule/redigo/redis"
+        "github.com/grafana/pyroscope-go"
+        "github.com/joho/godotenv"
+        "github.com/penglongli/gin-metrics/ginmetrics"
+        sloggin "github.com/samber/slog-gin"
+        actuator "github.com/sinhashubham95/go-actuator"
+        swaggerfiles "github.com/swaggo/files"
+        ginSwagger "github.com/swaggo/gin-swagger"
+        apiconstants "github.com/sweetrpg/api-core.go/constants"
+        "github.com/sweetrpg/api-core.go/featureflags"
+        "github.com/sweetrpg/api-core.go/ratelimit"
+        "github.com/sweetrpg/api-core.go/tracing"
+        "github.com/sweetrpg/authz-client.go/authz"
+        "github.com/sweetrpg/common.go/logging"
+        "github.com/sweetrpg/common.go/util"
+        "github.com/sweetrpg/game-room-api/cachettl"
+        "github.com/sweetrpg/game-room-api/constants"
+        "github.com/sweetrpg/game-room-api/docs"
+        "github.com/sweetrpg/game-room-api/internal/consumer"
+        "github.com/sweetrpg/game-room-api/readiness"
+        "github.com/sweetrpg/game-room-api/server"
+        "github.com/sweetrpg/mongodb.go/database"
+        "go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+)
+
+// redisConnectTimeout bounds startup/readiness pings to Redis so a stalled connection fails
+// fast instead of hanging past the caller's own timeout.
+const redisConnectTimeout = 5 * time.Second
+
+// @title Game Room API service
+// @version 1.0
+// @description HTTP API for the SweetRPG Game Room domain: a user's library (owned catalog volumes), wishlists, play tables, and peer-to-peer volume loans, each with per-resource visibility controls.
+// @termsOfService https://pilgrimagesoftware.com/terms/
+// @contact.name API Support
+// @contact.url https://sweetrpg.com
+// @contact.email admin@sweetrpg.com
+// @license.name MIT
+// @license.url https://mit-license.org/
+func main() <span class="cov0" title="0">{
+        _ = godotenv.Load(".env")
+
+        logging.Init()
+
+        setupSentry()
+
+        ff := featureflags.New(constants.ServiceName)
+
+        if stopProfiling := setupProfiling(ff); stopProfiling != nil </span><span class="cov0" title="0">{
+                defer stopProfiling()
+        }</span>
+
+        <span class="cov0" title="0">httpLogger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
+        r := gin.New()
+        r.Use(sloggin.New(httpLogger))
+        r.Use(gin.Recovery())
+
+        setupTracing(r)
+        defer tracing.TeardownTracing()
+
+        setupCORS(r)
+
+        setupMetrics(r)
+
+        redisPool := setupRedisPool()
+        if redisPool != nil </span><span class="cov0" title="0">{
+                defer func() </span><span class="cov0" title="0">{ _ = redisPool.Close() }</span>()
+        }
+        <span class="cov0" title="0">cache := setupCache(redisPool)
+        ttls := cachettl.Load()
+        r.Use(cacheInvalidationMiddleware(cache, redisPool))
+
+        database.SetupDatabase()
+        defer database.TeardownDatabase()
+
+        setupAcuator(r)
+
+        setupSwagger(r)
+
+        // Per-client/IP rate limiter (Redis-backed, fail-closed). See api-core.go/ratelimit.
+        r.Use(ratelimit.Middleware(redisPool, ratelimit.DefaultOptions()))
+
+        authzClient := authz.NewClient(util.GetEnv(constants.AUTH_API_URL, ""), util.GetEnv(constants.USERS_API_URL, ""))
+
+        server.SetupHandlers(r, cache, ttls, authzClient)
+
+        // Create and start the volume title sync consumer
+        volumeHandler := consumer.NewVolumeEventHandler(cache)
+        c := consumer.New(volumeHandler)
+        if err := c.Start(context.Background()); err != nil </span><span class="cov0" title="0">{
+                logging.Logger.Error("Failed to start consumer", "error", err)
+                // Log but don't fail startup - consumer is not critical
+        }</span>
+        <span class="cov0" title="0">defer func() </span><span class="cov0" title="0">{
+                ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+                defer cancel()
+                _ = c.Stop(ctx)
+        }</span>()
+
+        // Run the HTTP server
+        <span class="cov0" title="0">_ = r.Run(util.GetEnv(apiconstants.BIND_ADDRESS, ":8000"))</span>
+}
+
+func setupSwagger(r *gin.Engine) <span class="cov0" title="0">{
+        logging.Logger.Info("Setting up Swagger...")
+
+        docs.SwaggerInfo.Version = os.Getenv(apiconstants.VERSION)
+        docs.SwaggerInfo.Host = util.GetEnv(apiconstants.INGRESS_HOST, "localhost")
+        docs.SwaggerInfo.BasePath = util.GetEnv(apiconstants.INGRESS_BASE_PATH, "/")
+        docs.SwaggerInfo.Schemes = strings.Split(util.GetEnv(apiconstants.INGRESS_SCHEMES, "http"), ",")
+        r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+}</span>
+
+func setupCORS(r *gin.Engine) <span class="cov0" title="0">{
+        logging.Logger.Info("Setting up CORS...")
+
+        origins := util.GetEnv(constants.ALLOWED_ORIGINS, "")
+        if origins == "" </span><span class="cov0" title="0">{
+                logging.Logger.Warn("ALLOWED_ORIGINS not set, no cross-origin requests will be allowed")
+                return
+        }</span>
+
+        <span class="cov0" title="0">r.Use(cors.New(cors.Config{
+                AllowOrigins:     strings.Split(origins, ","),
+                AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+                AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+                AllowCredentials: true,
+                MaxAge:           12 * time.Hour,
+        }))</span>
+}
+
+func setupSentry() <span class="cov0" title="0">{
+        logging.Logger.Info("Setting up Sentry...")
+
+        sentryDsn, found := os.LookupEnv(apiconstants.SENTRY_DSN)
+        if found </span><span class="cov0" title="0">{
+                sentryDebug, _ := strconv.ParseBool(util.GetEnv(apiconstants.SENTRY_DEBUG, "false"))
+                err := sentry.Init(sentry.ClientOptions{
+                        Dsn:              sentryDsn,
+                        Debug:            sentryDebug,
+                        AttachStacktrace: true,
+                        EnableTracing:    true,
+                        TracesSampleRate: 1.0,
+                        TracesSampler: sentry.TracesSampler(func(ctx sentry.SamplingContext) float64 </span><span class="cov0" title="0">{
+                                if strings.Contains(ctx.Span.Name, "/status/") </span><span class="cov0" title="0">{
+                                        return 0.0
+                                }</span>
+                                <span class="cov0" title="0">return 1.0</span>
+                        }),
+                        ServerName: constants.ServiceName,
+                })
+                <span class="cov0" title="0">if err != nil </span><span class="cov0" title="0">{
+                        logging.Logger.Error("Error while trying to initialize Sentry", "error", err.Error())
+                }</span>
+                <span class="cov0" title="0">defer func() </span><span class="cov0" title="0">{
+                        log.Print("Flushing Sentry...")
+                        sentry.Flush(2 * time.Second)
+                }</span>()
+        }
+}
+
+// setupProfiling starts continuous profiling only when the profiling-enabled feature flag
+// evaluates to true - the flag is the on/off control, PYROSCOPE_SERVER_ADDRESS is only the
+// destination.
+func setupProfiling(ff *featureflags.Client) func() <span class="cov0" title="0">{
+        logging.Logger.Info("Setting up continuous profiling...")
+
+        if !ff.BoolFlag(context.Background(), constants.ProfilingEnabledFlag, false) </span><span class="cov0" title="0">{
+                logging.Logger.Info("profiling-enabled flag is off, continuous profiling disabled")
+                return nil
+        }</span>
+
+        <span class="cov0" title="0">serverAddress, found := os.LookupEnv(constants.PYROSCOPE_SERVER_ADDRESS)
+        if !found </span><span class="cov0" title="0">{
+                logging.Logger.Warn("profiling-enabled flag is on but PYROSCOPE_SERVER_ADDRESS not set, continuous profiling disabled")
+                return nil
+        }</span>
+
+        <span class="cov0" title="0">profiler, err := pyroscope.Start(pyroscope.Config{
+                ApplicationName: constants.ServiceName,
+                ServerAddress:   serverAddress,
+                TenantID:        util.GetEnv(constants.PYROSCOPE_TENANT_ID, ""),
+                Tags: map[string]string{
+                        "env": util.GetEnv(apiconstants.ENV, "dev"),
+                },
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                logging.Logger.Error("Error while trying to initialize continuous profiling", "error", err.Error())
+                return nil
+        }</span>
+
+        <span class="cov0" title="0">return func() </span><span class="cov0" title="0">{
+                _ = profiler.Stop()
+        }</span>
+}
+
+func setupAcuator(r *gin.Engine) <span class="cov0" title="0">{
+        logging.Logger.Info("Setting up actuator...")
+
+        actuatorHandler := actuator.GetActuatorHandler(&amp;actuator.Config{
+                Endpoints: []int{
+                        actuator.Env,
+                        actuator.Info,
+                        actuator.Metrics,
+                        actuator.Ping,
+                        actuator.ThreadDump,
+                },
+                Env:     util.GetEnv(apiconstants.ENV, "dev"),
+                Name:    constants.ServiceName,
+                Port:    util.GetEnvInt(apiconstants.PORT, 0),
+                Version: util.GetEnv(apiconstants.VERSION, "v0.0.0"),
+        })
+        ginActuatorHandler := func(ctx *gin.Context) </span><span class="cov0" title="0">{
+                actuatorHandler(ctx.Writer, ctx.Request)
+        }</span>
+        <span class="cov0" title="0">r.GET("/actuator/*endpoint", ginActuatorHandler)</span>
+}
+
+// setupRedisPool builds a shared redigo connection pool for both the rate limiter's counters
+// and the cache's startup connectivity check, when REDIS_HOST is configured. Returns nil when
+// no Redis is configured, so the service runs entirely without an external dependency.
+func setupRedisPool() *redis.Pool <span class="cov0" title="0">{
+        redisHost, found := os.LookupEnv(apiconstants.REDIS_HOST)
+        if !found </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+
+        <span class="cov0" title="0">redisPort := util.GetEnv(apiconstants.REDIS_PORT, "6379")
+        redisPass := os.Getenv(apiconstants.REDIS_PASS)
+        addr := fmt.Sprintf("%s:%s", redisHost, redisPort)
+
+        return &amp;redis.Pool{
+                MaxIdle:     5,
+                IdleTimeout: 240 * time.Second,
+                Dial: func() (redis.Conn, error) </span><span class="cov0" title="0">{
+                        c, err := redis.Dial("tcp", addr, redis.DialConnectTimeout(redisConnectTimeout))
+                        if err != nil </span><span class="cov0" title="0">{
+                                return nil, err
+                        }</span>
+                        <span class="cov0" title="0">if redisPass != "" </span><span class="cov0" title="0">{
+                                if _, err := c.Do("AUTH", redisPass); err != nil </span><span class="cov0" title="0">{
+                                        _ = c.Close()
+                                        return nil, err
+                                }</span>
+                        }
+                        <span class="cov0" title="0">return c, nil</span>
+                },
+        }
+}
+
+// setupCache builds the response cache store and, when REDIS_HOST is configured, registers the
+// Redis pool with readiness so /status/health live-pings it on every call, instead of trusting
+// a boot-time snapshot.
+func setupCache(redisPool *redis.Pool) persistence.CacheStore <span class="cov0" title="0">{
+        logging.Logger.Info("Setting up query cache...")
+
+        redisHost, found := os.LookupEnv(apiconstants.REDIS_HOST)
+        if !found </span><span class="cov0" title="0">{
+                readiness.SetCachePool(nil)
+                return persistence.NewInMemoryStore(time.Hour)
+        }</span>
+
+        <span class="cov0" title="0">redisPort := util.GetEnv(apiconstants.REDIS_PORT, "6379")
+        redisPass := os.Getenv(apiconstants.REDIS_PASS)
+        cache := persistence.NewRedisCache(fmt.Sprintf("%s:%s", redisHost, redisPort), redisPass, time.Hour)
+
+        readiness.SetCachePool(redisPool)
+
+        ctx, cancel := context.WithTimeout(context.Background(), redisConnectTimeout)
+        defer cancel()
+        if err := ratelimit.Ping(ctx, redisPool); err != nil </span><span class="cov0" title="0">{
+                logging.Logger.Error("REDIS_HOST is configured but unreachable at startup; readiness will keep live-checking on each /status/health call",
+                        "redis_host", redisHost, "error", err.Error())
+        }</span>
+
+        <span class="cov0" title="0">return cache</span>
+}
+
+func setupTracing(r *gin.Engine) <span class="cov0" title="0">{
+        logging.Logger.Info("Setting up tracing...")
+
+        tracing.SetupTracing(constants.ServiceName)
+        r.Use(otelgin.Middleware(constants.ServiceName))
+}</span>
+
+func setupMetrics(r *gin.Engine) <span class="cov0" title="0">{
+        logging.Logger.Info("Setting up metrics endpoint...")
+
+        m := ginmetrics.GetMonitor()
+        m.SetMetricPath("/metrics")
+        m.SetSlowTime(10)
+        m.SetDuration([]float64{0.1, 0.3, 1.2, 5, 10})
+        m.Use(r)
+}</span>
+
+// cacheInvalidationMiddleware flushes the response cache after any write (POST/PUT/PATCH/
+// DELETE) that succeeds (2xx status). A full flush rather than a targeted per-key delete: the
+// page-cache key is derived from the full request URL, which every read route would need
+// reconstructing to invalidate precisely - not worth the complexity at Game Room's write volume.
+func cacheInvalidationMiddleware(store persistence.CacheStore, redisPool *redis.Pool) gin.HandlerFunc <span class="cov0" title="0">{
+        return func(c *gin.Context) </span><span class="cov0" title="0">{
+                c.Next()
+                if !isCacheInvalidatingMethod(c.Request.Method) </span><span class="cov0" title="0">{
+                        return
+                }</span>
+                <span class="cov0" title="0">if status := c.Writer.Status(); status &lt; 200 || status &gt;= 300 </span><span class="cov0" title="0">{
+                        return
+                }</span>
+                <span class="cov0" title="0">if redisPool == nil </span><span class="cov0" title="0">{
+                        if err := store.Flush(); err != nil </span><span class="cov0" title="0">{
+                                logging.Logger.Warn("failed to flush response cache after write", "error", err.Error())
+                        }</span>
+                        <span class="cov0" title="0">return</span>
+                }
+                <span class="cov0" title="0">conn := redisPool.Get()
+                defer func() </span><span class="cov0" title="0">{ _ = conn.Close() }</span>()
+                <span class="cov0" title="0">if _, err := conn.Do("FLUSHDB"); err != nil </span><span class="cov0" title="0">{
+                        logging.Logger.Warn("failed to flush response cache after write", "error", err.Error())
+                }</span>
+        }
+}
+
+func isCacheInvalidatingMethod(method string) bool <span class="cov0" title="0">{
+        switch method </span>{
+        case http.MethodPost, http.MethodPatch, http.MethodPut, http.MethodDelete:<span class="cov0" title="0">
+                return true</span>
+        default:<span class="cov0" title="0">
+                return false</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">// migrate-table-volume-titles runs the one-time structural migration that ensures every table
+// document has a volume_titles object, setting it to an empty object on tables stored before
+// the denormalized-title sidecar existed.
+//
+// Safe to run more than once: data.MigrateTableVolumeTitles leaves tables that already have the
+// field untouched and reports the number of documents updated. It populates no titles - those
+// fill in as volumes are re-added or as catalog volume.updated events arrive. Run it against
+// each environment's database after deploying the release that adds the sidecar.
+package main
+
+import (
+        "context"
+        "os"
+        "time"
+
+        "github.com/joho/godotenv"
+        "github.com/sweetrpg/common.go/logging"
+        "github.com/sweetrpg/game-room-data.go/data"
+        "github.com/sweetrpg/mongodb.go/database"
+)
+
+// migrateTimeout bounds a single run against a slow or unreachable database so a hang cannot
+// stall the release pipeline forever.
+const migrateTimeout = 60 * time.Second
+
+func main() <span class="cov0" title="0">{
+        _ = godotenv.Load(".env")
+
+        logging.Init()
+
+        database.SetupDatabase()
+        defer database.TeardownDatabase()
+
+        ctx, cancel := context.WithTimeout(context.Background(), migrateTimeout)
+        defer cancel()
+
+        count, err := data.MigrateTableVolumeTitles(ctx)
+        if err != nil </span><span class="cov0" title="0">{
+                logging.Logger.Error("Table volume-title migration failed", "error", err.Error())
+                os.Exit(1)
+        }</span>
+
+        <span class="cov0" title="0">logging.Logger.Info("Table volume-title migration complete", "updated", count)</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">// migrate-wishlist-names runs the one-time migration that backfills the default
+// wishlist name onto documents stored before the multi-wishlist cutover.
+//
+// Safe to run more than once: data.MigrateWishlistNames leaves already-named
+// wishlists untouched and reports the number of documents updated. Wired into
+// .github/workflows/prepare-release.yaml as a release-blocking step so the old
+// singular routes can be retired only after every existing wishlist carries a
+// name.
+package main
+
+import (
+        "context"
+        "os"
+        "time"
+
+        "github.com/joho/godotenv"
+        "github.com/sweetrpg/common.go/logging"
+        "github.com/sweetrpg/game-room-data.go/data"
+        "github.com/sweetrpg/mongodb.go/database"
+)
+
+// migrateTimeout bounds a single run against a slow or unreachable database so a
+// hang cannot stall the release pipeline forever.
+const migrateTimeout = 60 * time.Second
+
+func main() <span class="cov0" title="0">{
+        _ = godotenv.Load(".env")
+
+        logging.Init()
+
+        database.SetupDatabase()
+        defer database.TeardownDatabase()
+
+        ctx, cancel := context.WithTimeout(context.Background(), migrateTimeout)
+        defer cancel()
+
+        count, err := data.MigrateWishlistNames(ctx)
+        if err != nil </span><span class="cov0" title="0">{
+                logging.Logger.Error("Wishlist name migration failed", "error", err.Error())
+                os.Exit(1)
+        }</span>
+
+        <span class="cov0" title="0">logging.Logger.Info("Wishlist name migration complete", "updated", count)</span>
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">// Package docs Code generated by swaggo/swag. DO NOT EDIT
+package docs
+
+import "github.com/swaggo/swag"
+
+const docTemplate = `{
+    "schemes": {{ marshal .Schemes }},
+    "swagger": "2.0",
+    "info": {
+        "description": "{{escape .Description}}",
+        "title": "{{.Title}}",
+        "termsOfService": "https://pilgrimagesoftware.com/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "https://sweetrpg.com",
+            "email": "admin@sweetrpg.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://mit-license.org/"
+        },
+        "version": "{{.Version}}"
+    },
+    "host": "{{.Host}}",
+    "basePath": "{{.BasePath}}",
+    "paths": {
+        "/status/health": {
+            "get": {
+                "description": "Check the application's own health plus its dependencies (database, cache). Returns 503 if any dependency check fails.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "status"
+                ],
+                "summary": "Health check",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/vo.HealthResponseVO"
+                        }
+                    },
+                    "503": {
+                        "description": "one or more dependency checks failed",
+                        "schema": {
+                            "$ref": "#/definitions/vo.HealthResponseVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/status/ping": {
+            "get": {
+                "description": "Ping",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "status"
+                ],
+                "summary": "Ping",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/vo.PingResponseVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/library": {
+            "get": {
+                "description": "Get a user's library, filtered to what the caller may see.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "library"
+                ],
+                "summary": "Get library",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/library/default-visibility": {
+            "put": {
+                "description": "Set the visibility applied to library entries that have no per-entry override. Valid visibility values: public, friends, friends_of_friends, private.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "library"
+                ],
+                "summary": "Set library default visibility",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New default visibility",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.visibilityRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid body or invalid visibility value",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/library/default-visibility/preview": {
+            "post": {
+                "description": "Dry-run a default-visibility change, returning the volume IDs of entries that would become more exposed - backs the warning dialog before the caller commits to the change.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "library"
+                ],
+                "summary": "Preview library default-visibility change",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Proposed new default visibility",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.visibilityRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.previewResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid body or invalid visibility value",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/library/entries": {
+            "post": {
+                "description": "Link a catalog volume into the caller's own library.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "library"
+                ],
+                "summary": "Add library entry",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Volume to add",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.volumeEntryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
+                    },
+                    "400": {
+                        "description": "volume_id missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/library/entries/{volume_id}": {
+            "delete": {
+                "description": "Unlink a catalog volume from the caller's own library.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "library"
+                ],
+                "summary": "Remove library entry",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "vol-123",
+                        "description": "Volume ID",
+                        "name": "volume_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/library/entries/{volume_id}/title": {
+            "put": {
+                "description": "Refresh the denormalized title snapshot on a single library entry.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "library"
+                ],
+                "summary": "Update library entry title",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "vol-123",
+                        "description": "Volume ID",
+                        "name": "volume_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New title",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.titleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
+                    },
+                    "400": {
+                        "description": "title missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no entry for this volume_id in the library",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/library/entries/{volume_id}/visibility": {
+            "put": {
+                "description": "Set (or clear, with an empty visibility) a per-entry visibility override. Valid visibility values: public, friends, friends_of_friends, private.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "library"
+                ],
+                "summary": "Set library entry visibility override",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "vol-123",
+                        "description": "Volume ID",
+                        "name": "volume_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New override (empty clears it)",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.visibilityRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.LibraryVO"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid body or invalid visibility value",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/loans": {
+            "get": {
+                "description": "List the volumes a user has lent out, both open and returned.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "loans"
+                ],
+                "summary": "List lent loans",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.LoanVO"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Lend a catalog volume to a platform-linked user or a free-form name. Exactly one of borrower_user_id or borrower_name is required; when borrower_user_id is given, borrower_name must also be supplied as that user's display name.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "loans"
+                ],
+                "summary": "Create loan",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID (the lender)",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Loan details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.createLoanRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.LoanVO"
+                        }
+                    },
+                    "400": {
+                        "description": "volume_id missing, or borrower fields don't satisfy the exactly-one-of rule",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "409": {
+                        "description": "volume is already out on an open loan",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/loans/borrowed": {
+            "get": {
+                "description": "List the volumes a platform-linked user has borrowed, both open and returned.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "loans"
+                ],
+                "summary": "List borrowed loans",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-456",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.LoanVO"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/loans/{loan_id}": {
+            "delete": {
+                "description": "Permanently remove a loan record. Lender-only.",
+                "tags": [
+                    "loans"
+                ],
+                "summary": "Delete loan",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID (the lender)",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "loan-789",
+                        "description": "Loan ID",
+                        "name": "loan_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "loan exists but is owned by a different lender",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no loan with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/loans/{loan_id}/return": {
+            "post": {
+                "description": "Mark a lent-out loan as returned. Lender-only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "loans"
+                ],
+                "summary": "Return loan",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID (the lender)",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "loan-789",
+                        "description": "Loan ID",
+                        "name": "loan_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.LoanVO"
+                        }
+                    },
+                    "403": {
+                        "description": "loan exists but is owned by a different lender",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no loan with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/tables": {
+            "get": {
+                "description": "List a user's tables, filtered to what the caller may see.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tables"
+                ],
+                "summary": "List tables",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.TableVO"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new table, defaulting to private visibility.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tables"
+                ],
+                "summary": "Create table",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Table name",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.createTableRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
+                    },
+                    "400": {
+                        "description": "name missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/tables/{id}": {
+            "get": {
+                "description": "Get one table by ID, if the caller may see it.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tables"
+                ],
+                "summary": "Get table",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "tbl-789",
+                        "description": "Table ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no table with this ID exists, or the caller may not see it",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Change a table's name. Owner-only.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tables"
+                ],
+                "summary": "Rename table",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "tbl-789",
+                        "description": "Table ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New name",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.createTableRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
+                    },
+                    "400": {
+                        "description": "name missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "403": {
+                        "description": "table exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no table with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Permanently remove a table. Owner-only.",
+                "tags": [
+                    "tables"
+                ],
+                "summary": "Delete table",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "tbl-789",
+                        "description": "Table ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "table exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no table with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/tables/{id}/visibility": {
+            "put": {
+                "description": "Set a table's visibility. Owner-only. Valid visibility values: public, friends, friends_of_friends, private.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tables"
+                ],
+                "summary": "Set table visibility",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "tbl-789",
+                        "description": "Table ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New visibility",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.visibilityRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid body or invalid visibility value",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "403": {
+                        "description": "table exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no table with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/tables/{id}/volumes": {
+            "post": {
+                "description": "Add a catalog volume to a table's shared pool. Owner-only.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tables"
+                ],
+                "summary": "Add table volume",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "tbl-789",
+                        "description": "Table ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Volume to add",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.volumeEntryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
+                    },
+                    "400": {
+                        "description": "volume_id missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "403": {
+                        "description": "table exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no table with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/tables/{id}/volumes/{volume_id}": {
+            "delete": {
+                "description": "Remove a catalog volume from a table's shared pool. Owner-only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tables"
+                ],
+                "summary": "Remove table volume",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "tbl-789",
+                        "description": "Table ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "vol-123",
+                        "description": "Volume ID",
+                        "name": "volume_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.TableVO"
+                        }
+                    },
+                    "403": {
+                        "description": "table exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no table with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/wishlists": {
+            "get": {
+                "description": "List a user's wishlists, filtered to what the caller may see.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wishlist"
+                ],
+                "summary": "List wishlists",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/server.WishlistVO"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new named wishlist, defaulting to private visibility.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wishlist"
+                ],
+                "summary": "Create wishlist",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Wishlist name",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.createWishlistRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.WishlistVO"
+                        }
+                    },
+                    "400": {
+                        "description": "name missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/wishlists/{wishlist_id}": {
+            "get": {
+                "description": "Get one wishlist by ID, if the caller may see it.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wishlist"
+                ],
+                "summary": "Get wishlist",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "wl-789",
+                        "description": "Wishlist ID",
+                        "name": "wishlist_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.WishlistVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no wishlist with this ID exists, or the caller may not see it",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Permanently remove a wishlist. Owner-only.",
+                "tags": [
+                    "wishlist"
+                ],
+                "summary": "Delete wishlist",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "wl-789",
+                        "description": "Wishlist ID",
+                        "name": "wishlist_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "403": {
+                        "description": "wishlist exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no wishlist with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/wishlists/{wishlist_id}/entries": {
+            "post": {
+                "description": "Add a catalog volume to a wishlist. Owner-only.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wishlist"
+                ],
+                "summary": "Add wishlist entry",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "wl-789",
+                        "description": "Wishlist ID",
+                        "name": "wishlist_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Volume to add",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.volumeEntryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.WishlistVO"
+                        }
+                    },
+                    "400": {
+                        "description": "volume_id missing",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "403": {
+                        "description": "wishlist exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no wishlist with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/wishlists/{wishlist_id}/entries/{volume_id}": {
+            "delete": {
+                "description": "Remove a catalog volume from a wishlist. Owner-only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wishlist"
+                ],
+                "summary": "Remove wishlist entry",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "wl-789",
+                        "description": "Wishlist ID",
+                        "name": "wishlist_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "vol-123",
+                        "description": "Volume ID",
+                        "name": "volume_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.WishlistVO"
+                        }
+                    },
+                    "403": {
+                        "description": "wishlist exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no wishlist with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/wishlists/{wishlist_id}/visibility": {
+            "put": {
+                "description": "Set a wishlist's visibility. Owner-only. Valid visibility values: public, friends, friends_of_friends, private.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "wishlist"
+                ],
+                "summary": "Set wishlist visibility",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "wl-789",
+                        "description": "Wishlist ID",
+                        "name": "wishlist_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New visibility",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.visibilityRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.WishlistVO"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid body or invalid visibility value",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "403": {
+                        "description": "wishlist exists but is owned by a different user",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    },
+                    "404": {
+                        "description": "no wishlist with this ID exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/vo.ErrorVO"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "server.LibraryVO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "default_visibility": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "deleted_by": {
+                    "type": "string"
+                },
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/vo.LibraryEntryVO"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "server.LoanVO": {
+            "type": "object",
+            "properties": {
+                "borrower_name": {
+                    "type": "string"
+                },
+                "borrower_user_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "deleted_by": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lender_user_id": {
+                    "type": "string"
+                },
+                "lent_at": {
+                    "type": "string"
+                },
+                "returned_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                },
+                "volume_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "server.TableVO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "deleted_by": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string"
+                },
+                "volume_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "volume_titles": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "server.WishlistVO": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "type": "string"
+                },
+                "deleted_by": {
+                    "type": "string"
+                },
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/vo.WishlistEntryVO"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "visibility": {
+                    "type": "string"
+                }
+            }
+        },
+        "server.createLoanRequest": {
+            "type": "object",
+            "properties": {
+                "borrower_name": {
+                    "type": "string",
+                    "example": "Jordan"
+                },
+                "borrower_user_id": {
+                    "type": "string",
+                    "example": "user-456"
+                },
+                "volume_id": {
+                    "type": "string",
+                    "example": "vol-123"
+                }
+            }
+        },
+        "server.createTableRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "Friday night group"
+                }
+            }
+        },
+        "server.createWishlistRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "Birthday wishlist"
+                }
+            }
+        },
+        "server.previewResponse": {
+            "type": "object",
+            "properties": {
+                "affected_volume_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "vol-123",
+                        "vol-456"
+                    ]
+                }
+            }
+        },
+        "server.titleRequest": {
+            "type": "object",
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "example": "Curse of Strahd (2nd printing)"
+                }
+            }
+        },
+        "server.visibilityRequest": {
+            "type": "object",
+            "properties": {
+                "visibility": {
+                    "type": "string",
+                    "example": "friends"
+                }
+            }
+        },
+        "server.volumeEntryRequest": {
+            "type": "object",
+            "properties": {
+                "volume_id": {
+                    "type": "string",
+                    "example": "vol-123"
+                },
+                "volume_title": {
+                    "type": "string",
+                    "example": "Curse of Strahd"
+                }
+            }
+        },
+        "vo.ErrorVO": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "vo.HealthResponseVO": {
+            "type": "object",
+            "properties": {
+                "collections": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "database": {
+                    "type": "string"
+                },
+                "errors": {
+                    "type": "integer"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "ping": {
+                    "type": "string"
+                }
+            }
+        },
+        "vo.LibraryEntryVO": {
+            "type": "object",
+            "properties": {
+                "added_at": {
+                    "type": "string"
+                },
+                "visibility_override": {
+                    "type": "string"
+                },
+                "volume_id": {
+                    "type": "string"
+                },
+                "volume_title": {
+                    "type": "string"
+                }
+            }
+        },
+        "vo.PingResponseVO": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "hostname": {
+                    "type": "string"
+                }
+            }
+        },
+        "vo.WishlistEntryVO": {
+            "type": "object",
+            "properties": {
+                "added_at": {
+                    "type": "string"
+                },
+                "volume_id": {
+                    "type": "string"
+                },
+                "volume_title": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}`
+
+// SwaggerInfo holds exported Swagger Info so clients can modify it
+var SwaggerInfo = &amp;swag.Spec{
+        Version:          "1.0",
+        Host:             "",
+        BasePath:         "",
+        Schemes:          []string{},
+        Title:            "Game Room API service",
+        Description:      "HTTP API for the SweetRPG Game Room domain: a user's library (owned catalog volumes), wishlists, play tables, and peer-to-peer volume loans, each with per-resource visibility controls.",
+        InfoInstanceName: "swagger",
+        SwaggerTemplate:  docTemplate,
+        LeftDelim:        "{{",
+        RightDelim:       "}}",
+}
+
+func init() <span class="cov0" title="0">{
+        swag.Register(SwaggerInfo.InstanceName(), SwaggerInfo)
+}</span>
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package consumer
+
+import (
+        "context"
+        "encoding/json"
+        "fmt"
+        "os"
+
+        "github.com/nats-io/nats.go"
+        "github.com/nats-io/nats.go/jetstream"
+        "github.com/sweetrpg/common.go/logging"
+        "github.com/sweetrpg/common.go/util"
+)
+
+// EventEnvelope is the platform event contract (see sweetrpg/platform docs/messaging-nats.md).
+// Unknown fields are ignored so the envelope can grow without breaking this consumer.
+type EventEnvelope struct {
+        EventID    string                 `json:"event_id"`
+        OccurredAt string                 `json:"occurred_at"`
+        Source     string                 `json:"source"`
+        EntityType string                 `json:"entity_type"`
+        EntityID   string                 `json:"entity_id"`
+        Action     string                 `json:"action"`
+        Revision   int                    `json:"revision"`
+        Data       map[string]interface{} `json:"data"`
+}
+
+type EventHandler interface {
+        HandleVolumeUpdated(ctx context.Context, event *EventEnvelope) error
+}
+
+const (
+        defaultStreamName      = "CATALOG_EVENTS"
+        defaultDurableConsumer = "game-room-api-volume-title-sync"
+        filterSubject          = "catalog.events.volume.updated"
+)
+
+// Consumer binds a durable JetStream pull consumer on the catalog events stream and applies
+// volume.updated events to library entries. It runs as a background worker of the API process
+// and is also startable standalone via cmd/consumer.
+type Consumer struct {
+        handler EventHandler
+        conn    *nats.Conn
+        cc      jetstream.ConsumeContext
+}
+
+func New(handler EventHandler) *Consumer <span class="cov8" title="5">{
+        return &amp;Consumer{handler: handler}
+}</span>
+
+// Start connects to NATS, binds the durable consumer, and begins consuming in the background.
+// Safe to pair with Stop even if Start returns an error.
+func (c *Consumer) Start(ctx context.Context) error <span class="cov8" title="5">{
+        natsURL := util.GetEnv("NATS_URL", "nats://localhost:4222")
+        streamName := util.GetEnv("NATS_STREAM", defaultStreamName)
+        durableName := util.GetEnv("NATS_DURABLE_NAME", defaultDurableConsumer)
+
+        opts := []nats.Option{nats.Name(durableName)}
+        if creds := os.Getenv("NATS_CREDS"); creds != "" </span><span class="cov0" title="0">{
+                opts = append(opts, nats.UserCredentials(creds))
+        }</span> else<span class="cov8" title="5"> if user := os.Getenv("NATS_USER"); user != "" </span><span class="cov0" title="0">{
+                opts = append(opts, nats.UserInfo(user, os.Getenv("NATS_PASSWORD")))
+        }</span>
+        <span class="cov8" title="5">conn, err := nats.Connect(natsURL, opts...)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("connect to NATS at %s: %w", natsURL, err)
+        }</span>
+        <span class="cov8" title="5">c.conn = conn
+
+        js, err := jetstream.New(conn)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("create JetStream context: %w", err)
+        }</span>
+
+        // Idempotent: matches the declaratively-managed Consumer CRD where a controller creates it,
+        // and creates it directly for local runs where none does. The durable name is stable so a
+        // redeploy resumes from the last acknowledged position.
+        <span class="cov8" title="5">cons, err := js.CreateOrUpdateConsumer(ctx, streamName, jetstream.ConsumerConfig{
+                Durable:       durableName,
+                FilterSubject: filterSubject,
+                AckPolicy:     jetstream.AckExplicitPolicy,
+        })
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("bind durable consumer %q on stream %q: %w", durableName, streamName, err)
+        }</span>
+
+        <span class="cov8" title="5">cc, err := cons.Consume(func(msg jetstream.Msg) </span><span class="cov10" title="7">{ c.process(ctx, msg) }</span>)
+        <span class="cov8" title="5">if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("start consuming: %w", err)
+        }</span>
+        <span class="cov8" title="5">c.cc = cc
+
+        logging.Logger.Info("volume-title-sync consumer bound",
+                "stream", streamName, "durable", durableName, "subject", filterSubject)
+        return nil</span>
+}
+
+// Stop halts consumption and closes the connection. Idempotent.
+func (c *Consumer) Stop(context.Context) error <span class="cov8" title="5">{
+        if c.cc != nil </span><span class="cov8" title="5">{
+                c.cc.Stop()
+                c.cc = nil
+        }</span>
+        <span class="cov8" title="5">if c.conn != nil </span><span class="cov8" title="5">{
+                c.conn.Close()
+                c.conn = nil
+        }</span>
+        <span class="cov8" title="5">logging.Logger.Info("volume-title-sync consumer stopped")
+        return nil</span>
+}
+
+func (c *Consumer) process(ctx context.Context, msg jetstream.Msg) <span class="cov10" title="7">{
+        var env EventEnvelope
+        if err := json.Unmarshal(msg.Data(), &amp;env); err != nil </span><span class="cov0" title="0">{
+                // A poison message would redeliver forever; ack it and move on.
+                logging.Logger.Error("dropping unparseable event", "error", err)
+                _ = msg.Ack()
+                return
+        }</span>
+
+        <span class="cov10" title="7">if env.EntityType != "volume" || env.Action != "updated" </span><span class="cov0" title="0">{
+                // The subject filter should exclude these; ack defensively if the server widens it.
+                _ = msg.Ack()
+                return
+        }</span>
+
+        <span class="cov10" title="7">if err := c.handler.HandleVolumeUpdated(ctx, &amp;env); err != nil </span><span class="cov4" title="2">{
+                // Do not ack: JetStream redelivers after the ack wait.
+                logging.Logger.Error("volume.updated handling failed, will retry",
+                        "event_id", env.EventID, "volume_id", env.EntityID, "error", err)
+                _ = msg.Nak()
+                return
+        }</span>
+        <span class="cov8" title="5">if err := msg.Ack(); err != nil </span><span class="cov0" title="0">{
+                logging.Logger.Error("ack failed", "event_id", env.EventID, "volume_id", env.EntityID, "error", err)
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package consumer
+
+import (
+        "context"
+        "errors"
+        "fmt"
+
+        "github.com/gin-contrib/cache"
+        "github.com/gin-contrib/cache/persistence"
+        "github.com/sweetrpg/common.go/logging"
+        "github.com/sweetrpg/game-room-data.go/data"
+)
+
+// VolumeEventHandler applies volume.updated events: refresh the denormalized title on every
+// referencing library entry, table volume, and wishlist entry, then drop the affected users'
+// cached list and detail pages.
+type VolumeEventHandler struct {
+        cache persistence.CacheStore
+}
+
+func NewVolumeEventHandler(store persistence.CacheStore) *VolumeEventHandler <span class="cov8" title="1">{
+        return &amp;VolumeEventHandler{cache: store}
+}</span>
+
+func (h *VolumeEventHandler) HandleVolumeUpdated(ctx context.Context, event *EventEnvelope) error <span class="cov8" title="1">{
+        volumeID := event.EntityID
+        if volumeID == "" </span><span class="cov8" title="1">{
+                return fmt.Errorf("volume.updated event %s has no entity_id", event.EventID)
+        }</span>
+        <span class="cov0" title="0">title, _ := event.Data["title"].(string)
+        if title == "" </span><span class="cov0" title="0">{
+                logging.Logger.Warn("volume.updated event has no data.title",
+                        "event_id", event.EventID, "volume_id", volumeID)
+                return nil
+        }</span>
+
+        // All three refreshes run for every event. A failure in any of them returns an error so the
+        // event is Nak'ed and redelivered; each refresh is idempotent, so the retry is safe.
+        <span class="cov0" title="0">libUsers, err := data.UpdateLibraryEntryTitleByVolume(ctx, volumeID, title)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("update library titles for volume %s: %w", volumeID, err)
+        }</span>
+        <span class="cov0" title="0">tableUsers, err := data.UpdateTableVolumeTitleByVolume(ctx, volumeID, title)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("update table titles for volume %s: %w", volumeID, err)
+        }</span>
+        <span class="cov0" title="0">wishlistUsers, err := data.UpdateWishlistEntryTitleByVolume(ctx, volumeID, title)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("update wishlist titles for volume %s: %w", volumeID, err)
+        }</span>
+
+        <span class="cov0" title="0">affected := union(libUsers, tableUsers, wishlistUsers)
+        h.invalidate(ctx, affected, volumeID)
+        logging.Logger.Info("volume title synced",
+                "event_id", event.EventID, "volume_id", volumeID, "users", len(affected))
+        return nil</span>
+}
+
+// invalidate drops every affected user's cached library, table, and wishlist pages - the list
+// pages unconditionally (their URLs derive from the user ID alone) and the detail pages for
+// whichever of their tables/wishlists actually reference the changed volume. gin-contrib/cache
+// keys a GET by its URL.
+func (h *VolumeEventHandler) invalidate(ctx context.Context, userIDs []string, volumeID string) <span class="cov0" title="0">{
+        if h.cache == nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+        <span class="cov0" title="0">for _, uid := range userIDs </span><span class="cov0" title="0">{
+                base := "/users/" + uid
+                h.drop(uid, cache.CreateKey(base+"/library"))
+                h.drop(uid, cache.CreateKey(base+"/tables"))
+                h.drop(uid, cache.CreateKey(base+"/wishlists"))
+
+                if tables, err := data.ListTablesByUser(ctx, uid); err != nil </span><span class="cov0" title="0">{
+                        logging.Logger.Warn("table detail cache invalidation lookup failed", "user_id", uid, "error", err)
+                }</span> else<span class="cov0" title="0"> {
+                        for _, t := range tables </span><span class="cov0" title="0">{
+                                if contains(t.VolumeIDs, volumeID) </span><span class="cov0" title="0">{
+                                        h.drop(uid, cache.CreateKey(base+"/tables/"+t.ID))
+                                }</span>
+                        }
+                }
+
+                <span class="cov0" title="0">if wls, err := data.ListWishlistsByUser(ctx, uid); err != nil </span><span class="cov0" title="0">{
+                        logging.Logger.Warn("wishlist detail cache invalidation lookup failed", "user_id", uid, "error", err)
+                }</span> else<span class="cov0" title="0"> {
+                        for _, wl := range wls </span><span class="cov0" title="0">{
+                                for _, e := range wl.Entries </span><span class="cov0" title="0">{
+                                        if e.VolumeID == volumeID </span><span class="cov0" title="0">{
+                                                h.drop(uid, cache.CreateKey(base+"/wishlists/"+wl.ID))
+                                                break</span>
+                                        }
+                                }
+                        }
+                }
+        }
+}
+
+func (h *VolumeEventHandler) drop(userID, key string) <span class="cov0" title="0">{
+        if err := h.cache.Delete(key); err != nil &amp;&amp; !errors.Is(err, persistence.ErrCacheMiss) </span><span class="cov0" title="0">{
+                logging.Logger.Warn("cache invalidation failed", "user_id", userID, "key", key, "error", err)
+        }</span>
+}
+
+func union(lists ...[]string) []string <span class="cov0" title="0">{
+        seen := map[string]struct{}{}
+        out := make([]string, 0)
+        for _, l := range lists </span><span class="cov0" title="0">{
+                for _, s := range l </span><span class="cov0" title="0">{
+                        if _, ok := seen[s]; ok </span><span class="cov0" title="0">{
+                                continue</span>
+                        }
+                        <span class="cov0" title="0">seen[s] = struct{}{}
+                        out = append(out, s)</span>
+                }
+        }
+        <span class="cov0" title="0">return out</span>
+}
+
+func contains(haystack []string, needle string) bool <span class="cov0" title="0">{
+        for _, s := range haystack </span><span class="cov0" title="0">{
+                if s == needle </span><span class="cov0" title="0">{
+                        return true
+                }</span>
+        }
+        <span class="cov0" title="0">return false</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">// Package readiness tracks the reachability of backend dependencies (beyond Mongo, which
+// api-core.go's HealthHandler already covers) so /status/health can fail loud instead of the
+// service silently degrading to an uncached or unlimited mode.
+package readiness
+
+import (
+        "context"
+        "sync/atomic"
+
+        "github.com/gomodule/redigo/redis"
+        "github.com/sweetrpg/api-core.go/ratelimit"
+)
+
+var cachePool atomic.Pointer[redis.Pool]
+
+// SetCachePool records the Redis pool CacheReady live-pings on each call. Pass nil when no
+// cache backend is configured (REDIS_HOST unset) - CacheReady then reports true, since the
+// in-memory fallback store has no external dependency to fail.
+func SetCachePool(pool *redis.Pool) <span class="cov0" title="0">{
+        cachePool.Store(pool)
+}</span>
+
+// CacheReady live-pings the configured cache backend rather than returning a cached boot-time
+// result - a Redis outage that resolves on its own should let readiness recover without
+// requiring a pod restart.
+func CacheReady(ctx context.Context) bool <span class="cov0" title="0">{
+        pool := cachePool.Load()
+        if pool == nil </span><span class="cov0" title="0">{
+                return true
+        }</span>
+        <span class="cov0" title="0">return ratelimit.Ping(ctx, pool) == nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package server
+
+import (
+        "net/http"
+
+        "github.com/getsentry/sentry-go"
+        "github.com/gin-gonic/gin"
+        apiv "github.com/sweetrpg/api-core.go/vo"
+        "github.com/sweetrpg/game-room-objects.go/models"
+        govo "github.com/sweetrpg/game-room-objects.go/vo"
+)
+
+// Documentation-only aliases so swaggo can resolve concrete response schemas for @Success/
+// @Failure annotations without the server package otherwise needing to import game-room-objects.go/vo.
+type (
+        LoanVO     = govo.LoanVO
+        LibraryVO  = govo.LibraryVO
+        WishlistVO = govo.WishlistVO
+        TableVO    = govo.TableVO
+)
+
+// volumeEntryRequest is shared by the library, wishlist, and table add-entry endpoints. All
+// three capture volume_title as a denormalized snapshot for display without a catalog lookup.
+type volumeEntryRequest struct {
+        VolumeID    string `json:"volume_id" example:"vol-123"`
+        VolumeTitle string `json:"volume_title" example:"Curse of Strahd"`
+}
+
+type visibilityRequest struct {
+        Visibility string `json:"visibility" example:"friends"`
+}
+
+type titleRequest struct {
+        Title string `json:"title" example:"Curse of Strahd (2nd printing)"`
+}
+
+type previewResponse struct {
+        AffectedVolumeIDs []string `json:"affected_volume_ids" example:"vol-123,vol-456"`
+}
+
+var validVisibilities = map[string]models.Visibility{
+        string(models.VisibilityPublic):           models.VisibilityPublic,
+        string(models.VisibilityFriends):          models.VisibilityFriends,
+        string(models.VisibilityFriendsOfFriends): models.VisibilityFriendsOfFriends,
+        string(models.VisibilityPrivate):          models.VisibilityPrivate,
+}
+
+func parseVisibility(s string) (models.Visibility, bool) <span class="cov0" title="0">{
+        v, ok := validVisibilities[s]
+        return v, ok
+}</span>
+
+// bindVisibility decodes a visibilityRequest body and validates its Visibility field, writing a
+// 400 response and returning ok=false on any failure - callers can return immediately.
+func bindVisibility(c *gin.Context, req *visibilityRequest) (models.Visibility, bool) <span class="cov0" title="0">{
+        if err := c.ShouldBindJSON(req); err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "invalid body"})
+                return "", false
+        }</span>
+        <span class="cov0" title="0">v, ok := parseVisibility(req.Visibility)
+        if !ok </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "invalid visibility"})
+                return "", false
+        }</span>
+        <span class="cov0" title="0">return v, true</span>
+}
+
+func internalError(c *gin.Context, err error) <span class="cov0" title="0">{
+        sentry.CaptureException(err)
+        c.JSON(http.StatusInternalServerError, apiv.ErrorVO{Error: "internal_error", Message: err.Error()})
+}</span>
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package server
+
+import (
+        "github.com/gin-contrib/cache/persistence"
+        "github.com/gin-gonic/gin"
+        "github.com/sweetrpg/authz-client.go/authz"
+        "github.com/sweetrpg/game-room-api/cachettl"
+)
+
+func SetupHandlers(g *gin.Engine, cache persistence.CacheStore, ttls cachettl.Config, authzClient *authz.Client) <span class="cov0" title="0">{
+        setupLibraryHandlers(g, cache, ttls, authzClient)
+        setupWishlistHandlers(g, cache, ttls, authzClient)
+        setupTableHandlers(g, cache, ttls, authzClient)
+        setupLoanHandlers(g, cache, ttls, authzClient)
+        setupStatusHandlers(g)
+}</span>
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package server
+
+import (
+        "errors"
+        "net/http"
+
+        "github.com/gin-contrib/cache"
+        "github.com/gin-contrib/cache/persistence"
+        "github.com/gin-gonic/gin"
+        apiv "github.com/sweetrpg/api-core.go/vo"
+        "github.com/sweetrpg/authz-client.go/authz"
+        "github.com/sweetrpg/game-room-api/cachettl"
+        "github.com/sweetrpg/game-room-data.go/data"
+        "github.com/sweetrpg/game-room-objects.go/models"
+)
+
+func setupLibraryHandlers(g *gin.Engine, store persistence.CacheStore, ttls cachettl.Config, authzClient *authz.Client) <span class="cov0" title="0">{
+        ttl := ttls.TTL("library")
+        viewer := authz.ResolveViewer(authzClient, "game-room-api")
+        owner := authz.RequireOwner()
+
+        g.GET("/users/:user_id/library", viewer, cache.CachePage(store, ttl, getLibrary))
+
+        g.POST("/users/:user_id/library/entries", viewer, owner, addLibraryEntry)
+        g.DELETE("/users/:user_id/library/entries/:volume_id", viewer, owner, removeLibraryEntry)
+        g.PUT("/users/:user_id/library/entries/:volume_id/visibility", viewer, owner, setLibraryEntryVisibility)
+        g.PUT("/users/:user_id/library/entries/:volume_id/title", viewer, owner, updateLibraryEntryTitle)
+        g.PUT("/users/:user_id/library/default-visibility", viewer, owner, setLibraryDefaultVisibility)
+        g.POST("/users/:user_id/library/default-visibility/preview", viewer, owner, previewLibraryDefaultVisibility)
+}</span>
+
+// Get a user's library.
+//
+//        @Summary                Get library
+//        @Description        Get a user's library, filtered to what the caller may see.
+//        @Tags                        library
+//        @Produce                json
+//        @Param                        user_id        path                string        true        "User ID"        example(user-123)
+//        @Success                200                {object}        LibraryVO
+//        @Failure                500                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/library [get]
+func getLibrary(c *gin.Context) <span class="cov0" title="0">{
+        userID := c.Param("user_id")
+        lib, err := data.GetLibraryByUser(c.Request.Context(), userID)
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if lib == nil </span><span class="cov0" title="0">{
+                lib = &amp;models.Library{UserID: userID, DefaultVisibility: models.VisibilityPrivate}
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.LibraryToVO(lib, authz.Viewer(c), false, false))</span>
+}
+
+// Add a library entry.
+//
+//        @Summary                Add library entry
+//        @Description        Link a catalog volume into the caller's own library.
+//        @Tags                        library
+//        @Accept                        json
+//        @Produce                json
+//        @Param                        user_id        path                string                                true        "User ID"        example(user-123)
+//        @Param                        body        body                volumeEntryRequest        true        "Volume to add"
+//        @Success                200                {object}        LibraryVO
+//        @Failure                400                {object}        apiv.ErrorVO        "volume_id missing"
+//        @Failure                500                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/library/entries [post]
+func addLibraryEntry(c *gin.Context) <span class="cov0" title="0">{
+        var req volumeEntryRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil || req.VolumeID == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
+                return
+        }</span>
+        <span class="cov0" title="0">lib, err := data.AddLibraryEntry(c.Request.Context(), c.Param("user_id"), req.VolumeID, req.VolumeTitle, authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.LibraryToVO(lib, authz.Viewer(c), false, false))</span>
+}
+
+// Remove a library entry.
+//
+//        @Summary                Remove library entry
+//        @Description        Unlink a catalog volume from the caller's own library.
+//        @Tags                        library
+//        @Produce                json
+//        @Param                        user_id                path                string        true        "User ID"        example(user-123)
+//        @Param                        volume_id        path                string        true        "Volume ID"        example(vol-123)
+//        @Success                200                        {object}        LibraryVO
+//        @Failure                500                        {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/library/entries/{volume_id} [delete]
+func removeLibraryEntry(c *gin.Context) <span class="cov0" title="0">{
+        lib, err := data.RemoveLibraryEntry(c.Request.Context(), c.Param("user_id"), c.Param("volume_id"), authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.LibraryToVO(lib, authz.Viewer(c), false, false))</span>
+}
+
+// Set a library entry's visibility override.
+//
+//        @Summary                Set library entry visibility override
+//        @Description        Set (or clear, with an empty visibility) a per-entry visibility override. Valid visibility values: public, friends, friends_of_friends, private.
+//        @Tags                        library
+//        @Accept                        json
+//        @Produce                json
+//        @Param                        user_id                path                string                                true        "User ID"        example(user-123)
+//        @Param                        volume_id        path                string                                true        "Volume ID"        example(vol-123)
+//        @Param                        body                body                visibilityRequest        true        "New override (empty clears it)"
+//        @Success                200                        {object}        LibraryVO
+//        @Failure                400                        {object}        apiv.ErrorVO        "invalid body or invalid visibility value"
+//        @Failure                500                        {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/library/entries/{volume_id}/visibility [put]
+func setLibraryEntryVisibility(c *gin.Context) <span class="cov0" title="0">{
+        var req visibilityRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "invalid body"})
+                return
+        }</span>
+
+        <span class="cov0" title="0">var override *models.Visibility
+        if req.Visibility != "" </span><span class="cov0" title="0">{
+                v, ok := parseVisibility(req.Visibility)
+                if !ok </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "invalid visibility"})
+                        return
+                }</span>
+                <span class="cov0" title="0">override = &amp;v</span>
+        }
+
+        <span class="cov0" title="0">lib, err := data.SetLibraryEntryVisibilityOverride(c.Request.Context(), c.Param("user_id"), c.Param("volume_id"), override, authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.LibraryToVO(lib, authz.Viewer(c), false, false))</span>
+}
+
+// Update a library entry's display title.
+//
+//        @Summary                Update library entry title
+//        @Description        Refresh the denormalized title snapshot on a single library entry.
+//        @Tags                        library
+//        @Accept                        json
+//        @Produce                json
+//        @Param                        user_id                path                string                        true        "User ID"        example(user-123)
+//        @Param                        volume_id        path                string                        true        "Volume ID"        example(vol-123)
+//        @Param                        body                body                titleRequest        true        "New title"
+//        @Success                200                        {object}        LibraryVO
+//        @Failure                400                        {object}        apiv.ErrorVO                "title missing"
+//        @Failure                404                        {object}        map[string]interface{}        "no entry for this volume_id in the library"
+//        @Failure                500                        {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/library/entries/{volume_id}/title [put]
+func updateLibraryEntryTitle(c *gin.Context) <span class="cov0" title="0">{
+        var req titleRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil || req.Title == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "title is required"})
+                return
+        }</span>
+        <span class="cov0" title="0">lib, err := data.UpdateLibraryEntryTitle(c.Request.Context(), c.Param("user_id"), c.Param("volume_id"), req.Title, authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                if errors.Is(err, data.ErrLibraryEntryNotFound) </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusNotFound, gin.H{})
+                        return
+                }</span>
+                <span class="cov0" title="0">internalError(c, err)
+                return</span>
+        }
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.LibraryToVO(lib, authz.Viewer(c), false, false))</span>
+}
+
+// Set the library's default visibility.
+//
+//        @Summary                Set library default visibility
+//        @Description        Set the visibility applied to library entries that have no per-entry override. Valid visibility values: public, friends, friends_of_friends, private.
+//        @Tags                        library
+//        @Accept                        json
+//        @Produce                json
+//        @Param                        user_id        path                string                                true        "User ID"        example(user-123)
+//        @Param                        body        body                visibilityRequest        true        "New default visibility"
+//        @Success                200                {object}        LibraryVO
+//        @Failure                400                {object}        apiv.ErrorVO        "invalid body or invalid visibility value"
+//        @Failure                500                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/library/default-visibility [put]
+func setLibraryDefaultVisibility(c *gin.Context) <span class="cov0" title="0">{
+        var req visibilityRequest
+        v, ok := bindVisibility(c, &amp;req)
+        if !ok </span><span class="cov0" title="0">{
+                return
+        }</span>
+        <span class="cov0" title="0">lib, err := data.SetLibraryDefaultVisibility(c.Request.Context(), c.Param("user_id"), v, authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.LibraryToVO(lib, authz.Viewer(c), false, false))</span>
+}
+
+// Preview a library default-visibility change.
+//
+//        @Summary                Preview library default-visibility change
+//        @Description        Dry-run a default-visibility change, returning the volume IDs of entries that would become more exposed - backs the warning dialog before the caller commits to the change.
+//        @Tags                        library
+//        @Accept                        json
+//        @Produce                json
+//        @Param                        user_id        path                string                                true        "User ID"        example(user-123)
+//        @Param                        body        body                visibilityRequest        true        "Proposed new default visibility"
+//        @Success                200                {object}        previewResponse
+//        @Failure                400                {object}        apiv.ErrorVO        "invalid body or invalid visibility value"
+//        @Failure                500                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/library/default-visibility/preview [post]
+func previewLibraryDefaultVisibility(c *gin.Context) <span class="cov0" title="0">{
+        var req visibilityRequest
+        v, ok := bindVisibility(c, &amp;req)
+        if !ok </span><span class="cov0" title="0">{
+                return
+        }</span>
+
+        <span class="cov0" title="0">lib, err := data.GetLibraryByUser(c.Request.Context(), c.Param("user_id"))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if lib == nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusOK, previewResponse{AffectedVolumeIDs: []string{}})
+                return
+        }</span>
+
+        <span class="cov0" title="0">c.JSON(http.StatusOK, previewResponse{AffectedVolumeIDs: data.PreviewLibraryDefaultChange(lib, v)})</span>
+}
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package server
+
+import (
+        "errors"
+        "net/http"
+
+        "github.com/gin-contrib/cache"
+        "github.com/gin-contrib/cache/persistence"
+        "github.com/gin-gonic/gin"
+        apiv "github.com/sweetrpg/api-core.go/vo"
+        "github.com/sweetrpg/authz-client.go/authz"
+        "github.com/sweetrpg/game-room-api/cachettl"
+        "github.com/sweetrpg/game-room-data.go/data"
+)
+
+// createLoanRequest accepts exactly one of BorrowerUserID or BorrowerName; when BorrowerUserID is
+// given, BorrowerName must also be supplied (the caller already has the linked user's display
+// name from its own user search - see design.md's borrower resolution decision).
+type createLoanRequest struct {
+        VolumeID       string  `json:"volume_id" example:"vol-123"`
+        BorrowerUserID *string `json:"borrower_user_id" example:"user-456"`
+        BorrowerName   string  `json:"borrower_name" example:"Jordan"`
+}
+
+// loanWriteFailure resolves a write's nil/false failure result into the right status: 403 if the
+// loan exists under a different lender, 404 if it doesn't exist at all.
+func loanWriteFailure(c *gin.Context) <span class="cov0" title="0">{
+        loan, err := data.GetLoan(c.Request.Context(), c.Param("loan_id"))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if loan != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusForbidden, apiv.ErrorVO{Error: "forbidden", Message: "Caller does not own this resource"})
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusNotFound, gin.H{})</span>
+}
+
+func setupLoanHandlers(g *gin.Engine, store persistence.CacheStore, ttls cachettl.Config, authzClient *authz.Client) <span class="cov0" title="0">{
+        ttl := ttls.TTL("loans")
+        viewer := authz.ResolveViewer(authzClient, "game-room-api")
+        owner := authz.RequireOwner()
+
+        g.GET("/users/:user_id/loans", viewer, owner, cache.CachePage(store, ttl, listLoansLent))
+        g.GET("/users/:user_id/loans/borrowed", viewer, owner, cache.CachePage(store, ttl, listLoansBorrowed))
+        g.POST("/users/:user_id/loans", viewer, owner, createLoan)
+        g.POST("/users/:user_id/loans/:loan_id/return", viewer, owner, returnLoan)
+        g.DELETE("/users/:user_id/loans/:loan_id", viewer, owner, deleteLoan)
+}</span>
+
+// List loans lent out by a user.
+//
+//        @Summary                List lent loans
+//        @Description        List the volumes a user has lent out, both open and returned.
+//        @Tags                        loans
+//        @Produce                json
+//        @Param                        user_id        path                string        true        "User ID"        example(user-123)
+//        @Success                200                {array}                LoanVO
+//        @Failure                500                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/loans [get]
+func listLoansLent(c *gin.Context) <span class="cov0" title="0">{
+        loans, err := data.ListLoansLentBy(c.Request.Context(), c.Param("user_id"))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">vos := make([]interface{}, 0, len(loans))
+        for _, l := range loans </span><span class="cov0" title="0">{
+                vos = append(vos, data.LoanToVO(l))
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, vos)</span>
+}
+
+// List loans borrowed by a user.
+//
+//        @Summary                List borrowed loans
+//        @Description        List the volumes a platform-linked user has borrowed, both open and returned.
+//        @Tags                        loans
+//        @Produce                json
+//        @Param                        user_id        path                string        true        "User ID"        example(user-456)
+//        @Success                200                {array}                LoanVO
+//        @Failure                500                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/loans/borrowed [get]
+func listLoansBorrowed(c *gin.Context) <span class="cov0" title="0">{
+        loans, err := data.ListLoansBorrowedBy(c.Request.Context(), c.Param("user_id"))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">vos := make([]interface{}, 0, len(loans))
+        for _, l := range loans </span><span class="cov0" title="0">{
+                vos = append(vos, data.LoanToVO(l))
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, vos)</span>
+}
+
+// Create a loan.
+//
+//        @Summary                Create loan
+//        @Description        Lend a catalog volume to a platform-linked user or a free-form name. Exactly one of borrower_user_id or borrower_name is required; when borrower_user_id is given, borrower_name must also be supplied as that user's display name.
+//        @Tags                        loans
+//        @Accept                        json
+//        @Produce                json
+//        @Param                        user_id        path                string                                true        "User ID (the lender)"        example(user-123)
+//        @Param                        body        body                createLoanRequest        true        "Loan details"
+//        @Success                200                {object}        LoanVO
+//        @Failure                400                {object}        apiv.ErrorVO        "volume_id missing, or borrower fields don't satisfy the exactly-one-of rule"
+//        @Failure                409                {object}        apiv.ErrorVO        "volume is already out on an open loan"
+//        @Failure                500                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/loans [post]
+func createLoan(c *gin.Context) <span class="cov0" title="0">{
+        var req createLoanRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil || req.VolumeID == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
+                return
+        }</span>
+        <span class="cov0" title="0">if (req.BorrowerUserID == nil || *req.BorrowerUserID == "") == (req.BorrowerName == "") </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "exactly one of borrower_user_id or borrower_name is required"})
+                return
+        }</span>
+        <span class="cov0" title="0">if req.BorrowerUserID != nil &amp;&amp; *req.BorrowerUserID != "" &amp;&amp; req.BorrowerName == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "borrower_name is required alongside borrower_user_id"})
+                return
+        }</span>
+
+        <span class="cov0" title="0">loan, err := data.CreateLoan(c.Request.Context(), c.Param("user_id"), req.VolumeID, req.BorrowerUserID, req.BorrowerName, authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                if errors.Is(err, data.ErrLoanBorrowerRequired) </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: err.Error()})
+                        return
+                }</span>
+                <span class="cov0" title="0">if errors.Is(err, data.ErrLoanAlreadyOpen) </span><span class="cov0" title="0">{
+                        c.JSON(http.StatusConflict, apiv.ErrorVO{Error: "conflict", Message: err.Error()})
+                        return
+                }</span>
+                <span class="cov0" title="0">internalError(c, err)
+                return</span>
+        }
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.LoanToVO(loan))</span>
+}
+
+// Mark a loan returned.
+//
+//        @Summary                Return loan
+//        @Description        Mark a lent-out loan as returned. Lender-only.
+//        @Tags                        loans
+//        @Produce                json
+//        @Param                        user_id                path                string        true        "User ID (the lender)"        example(user-123)
+//        @Param                        loan_id                path                string        true        "Loan ID"                                example(loan-789)
+//        @Success                200                        {object}        LoanVO
+//        @Failure                403                        {object}        apiv.ErrorVO                "loan exists but is owned by a different lender"
+//        @Failure                404                        {object}        map[string]interface{}        "no loan with this ID exists"
+//        @Failure                500                        {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/loans/{loan_id}/return [post]
+func returnLoan(c *gin.Context) <span class="cov0" title="0">{
+        loan, err := data.MarkLoanReturned(c.Request.Context(), c.Param("loan_id"), c.Param("user_id"), authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if loan == nil </span><span class="cov0" title="0">{
+                loanWriteFailure(c)
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.LoanToVO(loan))</span>
+}
+
+// Delete a loan.
+//
+//        @Summary                Delete loan
+//        @Description        Permanently remove a loan record. Lender-only.
+//        @Tags                        loans
+//        @Param                        user_id                path        string        true        "User ID (the lender)"        example(user-123)
+//        @Param                        loan_id                path        string        true        "Loan ID"                                example(loan-789)
+//        @Success                204
+//        @Failure                403        {object}        apiv.ErrorVO                "loan exists but is owned by a different lender"
+//        @Failure                404        {object}        map[string]interface{}        "no loan with this ID exists"
+//        @Failure                500        {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/loans/{loan_id} [delete]
+func deleteLoan(c *gin.Context) <span class="cov0" title="0">{
+        deleted, err := data.DeleteLoan(c.Request.Context(), c.Param("loan_id"), c.Param("user_id"), authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if !deleted </span><span class="cov0" title="0">{
+                loanWriteFailure(c)
+                return
+        }</span>
+        <span class="cov0" title="0">c.Status(http.StatusNoContent)</span>
+}
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package server
+
+import (
+        "net/http"
+
+        "github.com/gin-gonic/gin"
+        apicores "github.com/sweetrpg/api-core.go/server"
+        _ "github.com/sweetrpg/api-core.go/vo"
+        "github.com/sweetrpg/common.go/logging"
+)
+
+func setupStatusHandlers(g *gin.Engine) <span class="cov0" title="0">{
+        logging.Logger.Info("Setting up status endpoint handlers...")
+
+        </span><span class="cov0" title="0">{
+                a := g.Group("/status")
+                a.GET("/health", healthHandler)
+        }</span>
+
+        <span class="cov0" title="0">g.GET("/status/ping", pingHandler)</span>
+}
+
+// Health check.
+//
+//         Do a health check of the application and its dependencies and return the results
+//                @Summary                Health check
+//                @Description        Check the application's own health plus its dependencies (database, cache). Returns 503 if any dependency check fails.
+//                @Tags                        status
+//                @Produce                json
+//                @Success                200                {object}        vo.HealthResponseVO
+//                @Failure                503                {object}        vo.HealthResponseVO        "one or more dependency checks failed"
+//                @Router                        /status/health [get]
+func healthHandler(c *gin.Context) <span class="cov0" title="0">{
+        resp := apicores.HealthHandler(c.Request.Context())
+        status := http.StatusOK
+        if resp.Errors &gt; 0 </span><span class="cov0" title="0">{
+                status = http.StatusServiceUnavailable
+        }</span>
+        <span class="cov0" title="0">c.JSON(status, resp)</span>
+}
+
+// Ping the application.
+//
+//         A shallow health check to see if basic responses are working. Returns the date and hostname of the server handling the request.
+//                @Summary                Ping
+//                @Description        Ping
+//                @Tags                        status
+//                @Produce                json
+//                @Success                200                {object}        vo.PingResponseVO
+//                @Router                        /status/ping [get]
+func pingHandler(c *gin.Context) <span class="cov0" title="0">{
+        c.JSON(http.StatusOK, apicores.PingHandler())
+}</span>
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">package server
+
+import (
+        "net/http"
+
+        "github.com/gin-contrib/cache"
+        "github.com/gin-contrib/cache/persistence"
+        "github.com/gin-gonic/gin"
+        apiv "github.com/sweetrpg/api-core.go/vo"
+        "github.com/sweetrpg/authz-client.go/authz"
+        "github.com/sweetrpg/game-room-api/cachettl"
+        "github.com/sweetrpg/game-room-data.go/data"
+)
+
+type createTableRequest struct {
+        Name string `json:"name" example:"Friday night group"`
+}
+
+// tableWriteFailure resolves a write's nil/false failure result into the right status: 403 if
+// the table exists under a different owner, 404 if it doesn't exist at all.
+func tableWriteFailure(c *gin.Context) <span class="cov0" title="0">{
+        tbl, err := data.GetTable(c.Request.Context(), c.Param("id"))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if tbl != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusForbidden, apiv.ErrorVO{Error: "forbidden", Message: "Caller does not own this resource"})
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusNotFound, gin.H{})</span>
+}
+
+func setupTableHandlers(g *gin.Engine, store persistence.CacheStore, ttls cachettl.Config, authzClient *authz.Client) <span class="cov0" title="0">{
+        ttl := ttls.TTL("tables")
+        viewer := authz.ResolveViewer(authzClient, "game-room-api")
+        owner := authz.RequireOwner()
+
+        g.GET("/users/:user_id/tables", viewer, cache.CachePage(store, ttl, listTables))
+        g.GET("/users/:user_id/tables/:id", viewer, cache.CachePage(store, ttl, getTable))
+
+        g.POST("/users/:user_id/tables", viewer, owner, createTable)
+        g.PUT("/users/:user_id/tables/:id", viewer, owner, updateTableName)
+        g.DELETE("/users/:user_id/tables/:id", viewer, owner, deleteTable)
+        g.POST("/users/:user_id/tables/:id/volumes", viewer, owner, addTableVolume)
+        g.DELETE("/users/:user_id/tables/:id/volumes/:volume_id", viewer, owner, removeTableVolume)
+        g.PUT("/users/:user_id/tables/:id/visibility", viewer, owner, setTableVisibility)
+}</span>
+
+// List a user's tables.
+//
+//        @Summary                List tables
+//        @Description        List a user's tables, filtered to what the caller may see.
+//        @Tags                        tables
+//        @Produce                json
+//        @Param                        user_id        path                string        true        "User ID"        example(user-123)
+//        @Success                200                {array}                TableVO
+//        @Failure                500                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/tables [get]
+func listTables(c *gin.Context) <span class="cov0" title="0">{
+        tables, err := data.ListTablesByUser(c.Request.Context(), c.Param("user_id"))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">viewer := authz.Viewer(c)
+        vos := make([]interface{}, 0, len(tables))
+        for _, t := range tables </span><span class="cov0" title="0">{
+                if v := data.TableToVO(t, viewer, false, false); v != nil </span><span class="cov0" title="0">{
+                        vos = append(vos, v)
+                }</span>
+        }
+        <span class="cov0" title="0">c.JSON(http.StatusOK, vos)</span>
+}
+
+// Get one table.
+//
+//        @Summary                Get table
+//        @Description        Get one table by ID, if the caller may see it.
+//        @Tags                        tables
+//        @Produce                json
+//        @Param                        user_id        path                string        true        "User ID"        example(user-123)
+//        @Param                        id                path                string        true        "Table ID"        example(tbl-789)
+//        @Success                200                {object}        TableVO
+//        @Failure                404                {object}        map[string]interface{}        "no table with this ID exists, or the caller may not see it"
+//        @Failure                500                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/tables/{id} [get]
+func getTable(c *gin.Context) <span class="cov0" title="0">{
+        tbl, err := data.GetTable(c.Request.Context(), c.Param("id"))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if tbl == nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusNotFound, gin.H{})
+                return
+        }</span>
+        <span class="cov0" title="0">vo := data.TableToVO(tbl, authz.Viewer(c), false, false)
+        if vo == nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusNotFound, gin.H{})
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, vo)</span>
+}
+
+// Create a table.
+//
+//        @Summary                Create table
+//        @Description        Create a new table, defaulting to private visibility.
+//        @Tags                        tables
+//        @Accept                        json
+//        @Produce                json
+//        @Param                        user_id        path                string                                true        "User ID"        example(user-123)
+//        @Param                        body        body                createTableRequest        true        "Table name"
+//        @Success                200                {object}        TableVO
+//        @Failure                400                {object}        apiv.ErrorVO        "name missing"
+//        @Failure                500                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/tables [post]
+func createTable(c *gin.Context) <span class="cov0" title="0">{
+        var req createTableRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil || req.Name == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "name is required"})
+                return
+        }</span>
+        <span class="cov0" title="0">tbl, err := data.CreateTable(c.Request.Context(), c.Param("user_id"), req.Name, authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.TableToVO(tbl, authz.Viewer(c), false, false))</span>
+}
+
+// Rename a table.
+//
+//        @Summary                Rename table
+//        @Description        Change a table's name. Owner-only.
+//        @Tags                        tables
+//        @Accept                        json
+//        @Produce                json
+//        @Param                        user_id        path                string                                true        "User ID"        example(user-123)
+//        @Param                        id                path                string                                true        "Table ID"        example(tbl-789)
+//        @Param                        body        body                createTableRequest        true        "New name"
+//        @Success                200                {object}        TableVO
+//        @Failure                400                {object}        apiv.ErrorVO                "name missing"
+//        @Failure                403                {object}        apiv.ErrorVO                "table exists but is owned by a different user"
+//        @Failure                404                {object}        map[string]interface{}        "no table with this ID exists"
+//        @Failure                500                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/tables/{id} [put]
+func updateTableName(c *gin.Context) <span class="cov0" title="0">{
+        var req createTableRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil || req.Name == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "name is required"})
+                return
+        }</span>
+        <span class="cov0" title="0">tbl, err := data.UpdateTableName(c.Request.Context(), c.Param("id"), c.Param("user_id"), req.Name, authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if tbl == nil </span><span class="cov0" title="0">{
+                tableWriteFailure(c)
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.TableToVO(tbl, authz.Viewer(c), false, false))</span>
+}
+
+// Delete a table.
+//
+//        @Summary                Delete table
+//        @Description        Permanently remove a table. Owner-only.
+//        @Tags                        tables
+//        @Param                        user_id        path        string        true        "User ID"        example(user-123)
+//        @Param                        id                path        string        true        "Table ID"        example(tbl-789)
+//        @Success                204
+//        @Failure                403        {object}        apiv.ErrorVO                "table exists but is owned by a different user"
+//        @Failure                404        {object}        map[string]interface{}        "no table with this ID exists"
+//        @Failure                500        {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/tables/{id} [delete]
+func deleteTable(c *gin.Context) <span class="cov0" title="0">{
+        deleted, err := data.DeleteTable(c.Request.Context(), c.Param("id"), c.Param("user_id"), authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if !deleted </span><span class="cov0" title="0">{
+                tableWriteFailure(c)
+                return
+        }</span>
+        <span class="cov0" title="0">c.Status(http.StatusNoContent)</span>
+}
+
+// Add a volume to a table.
+//
+//        @Summary                Add table volume
+//        @Description        Add a catalog volume to a table's shared pool. Owner-only.
+//        @Tags                        tables
+//        @Accept                        json
+//        @Produce                json
+//        @Param                        user_id        path                string                                true        "User ID"        example(user-123)
+//        @Param                        id                path                string                                true        "Table ID"        example(tbl-789)
+//        @Param                        body        body                volumeEntryRequest        true        "Volume to add"
+//        @Success                200                {object}        TableVO
+//        @Failure                400                {object}        apiv.ErrorVO                "volume_id missing"
+//        @Failure                403                {object}        apiv.ErrorVO                "table exists but is owned by a different user"
+//        @Failure                404                {object}        map[string]interface{}        "no table with this ID exists"
+//        @Failure                500                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/tables/{id}/volumes [post]
+func addTableVolume(c *gin.Context) <span class="cov0" title="0">{
+        var req volumeEntryRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil || req.VolumeID == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
+                return
+        }</span>
+        <span class="cov0" title="0">tbl, err := data.AddTableVolume(c.Request.Context(), c.Param("id"), c.Param("user_id"), req.VolumeID, req.VolumeTitle, authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if tbl == nil </span><span class="cov0" title="0">{
+                tableWriteFailure(c)
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.TableToVO(tbl, authz.Viewer(c), false, false))</span>
+}
+
+// Remove a volume from a table.
+//
+//        @Summary                Remove table volume
+//        @Description        Remove a catalog volume from a table's shared pool. Owner-only.
+//        @Tags                        tables
+//        @Produce                json
+//        @Param                        user_id                path                string        true        "User ID"        example(user-123)
+//        @Param                        id                        path                string        true        "Table ID"        example(tbl-789)
+//        @Param                        volume_id        path                string        true        "Volume ID"        example(vol-123)
+//        @Success                200                        {object}        TableVO
+//        @Failure                403                        {object}        apiv.ErrorVO                "table exists but is owned by a different user"
+//        @Failure                404                        {object}        map[string]interface{}        "no table with this ID exists"
+//        @Failure                500                        {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/tables/{id}/volumes/{volume_id} [delete]
+func removeTableVolume(c *gin.Context) <span class="cov0" title="0">{
+        tbl, err := data.RemoveTableVolume(c.Request.Context(), c.Param("id"), c.Param("user_id"), c.Param("volume_id"), authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if tbl == nil </span><span class="cov0" title="0">{
+                tableWriteFailure(c)
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.TableToVO(tbl, authz.Viewer(c), false, false))</span>
+}
+
+// Set a table's visibility.
+//
+//        @Summary                Set table visibility
+//        @Description        Set a table's visibility. Owner-only. Valid visibility values: public, friends, friends_of_friends, private.
+//        @Tags                        tables
+//        @Accept                        json
+//        @Produce                json
+//        @Param                        user_id        path                string                                true        "User ID"        example(user-123)
+//        @Param                        id                path                string                                true        "Table ID"        example(tbl-789)
+//        @Param                        body        body                visibilityRequest        true        "New visibility"
+//        @Success                200                {object}        TableVO
+//        @Failure                400                {object}        apiv.ErrorVO                "invalid body or invalid visibility value"
+//        @Failure                403                {object}        apiv.ErrorVO                "table exists but is owned by a different user"
+//        @Failure                404                {object}        map[string]interface{}        "no table with this ID exists"
+//        @Failure                500                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/tables/{id}/visibility [put]
+func setTableVisibility(c *gin.Context) <span class="cov0" title="0">{
+        var req visibilityRequest
+        v, ok := bindVisibility(c, &amp;req)
+        if !ok </span><span class="cov0" title="0">{
+                return
+        }</span>
+        <span class="cov0" title="0">tbl, err := data.SetTableVisibility(c.Request.Context(), c.Param("id"), c.Param("user_id"), v, authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if tbl == nil </span><span class="cov0" title="0">{
+                tableWriteFailure(c)
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.TableToVO(tbl, authz.Viewer(c), false, false))</span>
+}
+</pre>
+		
+		<pre class="file" id="file15" style="display: none">package server
+
+import (
+        "net/http"
+
+        "github.com/gin-contrib/cache"
+        "github.com/gin-contrib/cache/persistence"
+        "github.com/gin-gonic/gin"
+        apiv "github.com/sweetrpg/api-core.go/vo"
+        "github.com/sweetrpg/authz-client.go/authz"
+        "github.com/sweetrpg/game-room-api/cachettl"
+        "github.com/sweetrpg/game-room-data.go/data"
+)
+
+type createWishlistRequest struct {
+        Name string `json:"name" example:"Birthday wishlist"`
+}
+
+// wishlistWriteFailure resolves a write's nil/false failure result into the right status: 403
+// if the wishlist exists under a different owner, 404 if it doesn't exist at all.
+func wishlistWriteFailure(c *gin.Context) <span class="cov0" title="0">{
+        wl, err := data.GetWishlist(c.Request.Context(), c.Param("wishlist_id"))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if wl != nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusForbidden, apiv.ErrorVO{Error: "forbidden", Message: "Caller does not own this resource"})
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusNotFound, gin.H{})</span>
+}
+
+func setupWishlistHandlers(g *gin.Engine, store persistence.CacheStore, ttls cachettl.Config, authzClient *authz.Client) <span class="cov0" title="0">{
+        ttl := ttls.TTL("wishlist")
+        viewer := authz.ResolveViewer(authzClient, "game-room-api")
+        owner := authz.RequireOwner()
+
+        g.GET("/users/:user_id/wishlists", viewer, cache.CachePage(store, ttl, listWishlists))
+        g.GET("/users/:user_id/wishlists/:wishlist_id", viewer, cache.CachePage(store, ttl, getWishlistByID))
+        g.POST("/users/:user_id/wishlists", viewer, owner, createWishlist)
+        g.DELETE("/users/:user_id/wishlists/:wishlist_id", viewer, owner, deleteWishlist)
+
+        g.POST("/users/:user_id/wishlists/:wishlist_id/entries", viewer, owner, addWishlistEntry)
+        g.DELETE("/users/:user_id/wishlists/:wishlist_id/entries/:volume_id", viewer, owner, removeWishlistEntry)
+        g.PUT("/users/:user_id/wishlists/:wishlist_id/visibility", viewer, owner, setWishlistVisibility)
+}</span>
+
+// List a user's wishlists.
+//
+//        @Summary                List wishlists
+//        @Description        List a user's wishlists, filtered to what the caller may see.
+//        @Tags                        wishlist
+//        @Produce                json
+//        @Param                        user_id        path                string        true        "User ID"        example(user-123)
+//        @Success                200                {array}                WishlistVO
+//        @Failure                500                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/wishlists [get]
+func listWishlists(c *gin.Context) <span class="cov0" title="0">{
+        wls, err := data.ListWishlistsByUser(c.Request.Context(), c.Param("user_id"))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">viewer := authz.Viewer(c)
+        vos := make([]interface{}, 0, len(wls))
+        for _, wl := range wls </span><span class="cov0" title="0">{
+                if v := data.WishlistToVO(wl, viewer, false, false); v != nil </span><span class="cov0" title="0">{
+                        vos = append(vos, v)
+                }</span>
+        }
+        <span class="cov0" title="0">c.JSON(http.StatusOK, vos)</span>
+}
+
+// Get one wishlist.
+//
+//        @Summary                Get wishlist
+//        @Description        Get one wishlist by ID, if the caller may see it.
+//        @Tags                        wishlist
+//        @Produce                json
+//        @Param                        user_id                        path                string        true        "User ID"                example(user-123)
+//        @Param                        wishlist_id                path                string        true        "Wishlist ID"        example(wl-789)
+//        @Success                200                                {object}        WishlistVO
+//        @Failure                404                                {object}        map[string]interface{}        "no wishlist with this ID exists, or the caller may not see it"
+//        @Failure                500                                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/wishlists/{wishlist_id} [get]
+func getWishlistByID(c *gin.Context) <span class="cov0" title="0">{
+        wl, err := data.GetWishlist(c.Request.Context(), c.Param("wishlist_id"))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if wl == nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusNotFound, gin.H{})
+                return
+        }</span>
+        <span class="cov0" title="0">vo := data.WishlistToVO(wl, authz.Viewer(c), false, false)
+        if vo == nil </span><span class="cov0" title="0">{
+                c.JSON(http.StatusNotFound, gin.H{})
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, vo)</span>
+}
+
+// Create a wishlist.
+//
+//        @Summary                Create wishlist
+//        @Description        Create a new named wishlist, defaulting to private visibility.
+//        @Tags                        wishlist
+//        @Accept                        json
+//        @Produce                json
+//        @Param                        user_id        path                string                                        true        "User ID"        example(user-123)
+//        @Param                        body        body                createWishlistRequest        true        "Wishlist name"
+//        @Success                200                {object}        WishlistVO
+//        @Failure                400                {object}        apiv.ErrorVO        "name missing"
+//        @Failure                500                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/wishlists [post]
+func createWishlist(c *gin.Context) <span class="cov0" title="0">{
+        var req createWishlistRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil || req.Name == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "name is required"})
+                return
+        }</span>
+        <span class="cov0" title="0">wl, err := data.CreateWishlist(c.Request.Context(), c.Param("user_id"), req.Name, authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.WishlistToVO(wl, authz.Viewer(c), false, false))</span>
+}
+
+// Delete a wishlist.
+//
+//        @Summary                Delete wishlist
+//        @Description        Permanently remove a wishlist. Owner-only.
+//        @Tags                        wishlist
+//        @Param                        user_id                        path        string        true        "User ID"                example(user-123)
+//        @Param                        wishlist_id                path        string        true        "Wishlist ID"        example(wl-789)
+//        @Success                204
+//        @Failure                403        {object}        apiv.ErrorVO                "wishlist exists but is owned by a different user"
+//        @Failure                404        {object}        map[string]interface{}        "no wishlist with this ID exists"
+//        @Failure                500        {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/wishlists/{wishlist_id} [delete]
+func deleteWishlist(c *gin.Context) <span class="cov0" title="0">{
+        deleted, err := data.DeleteWishlist(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if !deleted </span><span class="cov0" title="0">{
+                wishlistWriteFailure(c)
+                return
+        }</span>
+        <span class="cov0" title="0">c.Status(http.StatusNoContent)</span>
+}
+
+// Add a wishlist entry.
+//
+//        @Summary                Add wishlist entry
+//        @Description        Add a catalog volume to a wishlist. Owner-only.
+//        @Tags                        wishlist
+//        @Accept                        json
+//        @Produce                json
+//        @Param                        user_id                        path                string                                true        "User ID"                example(user-123)
+//        @Param                        wishlist_id                path                string                                true        "Wishlist ID"        example(wl-789)
+//        @Param                        body                        body                volumeEntryRequest        true        "Volume to add"
+//        @Success                200                                {object}        WishlistVO
+//        @Failure                400                                {object}        apiv.ErrorVO                "volume_id missing"
+//        @Failure                403                                {object}        apiv.ErrorVO                "wishlist exists but is owned by a different user"
+//        @Failure                404                                {object}        map[string]interface{}        "no wishlist with this ID exists"
+//        @Failure                500                                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/wishlists/{wishlist_id}/entries [post]
+func addWishlistEntry(c *gin.Context) <span class="cov0" title="0">{
+        var req volumeEntryRequest
+        if err := c.ShouldBindJSON(&amp;req); err != nil || req.VolumeID == "" </span><span class="cov0" title="0">{
+                c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
+                return
+        }</span>
+        <span class="cov0" title="0">wl, err := data.AddWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), req.VolumeID, req.VolumeTitle, authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if wl == nil </span><span class="cov0" title="0">{
+                wishlistWriteFailure(c)
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.WishlistToVO(wl, authz.Viewer(c), false, false))</span>
+}
+
+// Remove a wishlist entry.
+//
+//        @Summary                Remove wishlist entry
+//        @Description        Remove a catalog volume from a wishlist. Owner-only.
+//        @Tags                        wishlist
+//        @Produce                json
+//        @Param                        user_id                        path                string        true        "User ID"                example(user-123)
+//        @Param                        wishlist_id                path                string        true        "Wishlist ID"        example(wl-789)
+//        @Param                        volume_id                path                string        true        "Volume ID"                example(vol-123)
+//        @Success                200                                {object}        WishlistVO
+//        @Failure                403                                {object}        apiv.ErrorVO                "wishlist exists but is owned by a different user"
+//        @Failure                404                                {object}        map[string]interface{}        "no wishlist with this ID exists"
+//        @Failure                500                                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/wishlists/{wishlist_id}/entries/{volume_id} [delete]
+func removeWishlistEntry(c *gin.Context) <span class="cov0" title="0">{
+        wl, err := data.RemoveWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), c.Param("volume_id"), authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if wl == nil </span><span class="cov0" title="0">{
+                wishlistWriteFailure(c)
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.WishlistToVO(wl, authz.Viewer(c), false, false))</span>
+}
+
+// Set the wishlist's visibility.
+//
+//        @Summary                Set wishlist visibility
+//        @Description        Set a wishlist's visibility. Owner-only. Valid visibility values: public, friends, friends_of_friends, private.
+//        @Tags                        wishlist
+//        @Accept                        json
+//        @Produce                json
+//        @Param                        user_id                        path                string                                true        "User ID"                example(user-123)
+//        @Param                        wishlist_id                path                string                                true        "Wishlist ID"        example(wl-789)
+//        @Param                        body                        body                visibilityRequest        true        "New visibility"
+//        @Success                200                                {object}        WishlistVO
+//        @Failure                400                                {object}        apiv.ErrorVO                "invalid body or invalid visibility value"
+//        @Failure                403                                {object}        apiv.ErrorVO                "wishlist exists but is owned by a different user"
+//        @Failure                404                                {object}        map[string]interface{}        "no wishlist with this ID exists"
+//        @Failure                500                                {object}        apiv.ErrorVO
+//        @Router                        /users/{user_id}/wishlists/{wishlist_id}/visibility [put]
+func setWishlistVisibility(c *gin.Context) <span class="cov0" title="0">{
+        var req visibilityRequest
+        v, ok := bindVisibility(c, &amp;req)
+        if !ok </span><span class="cov0" title="0">{
+                return
+        }</span>
+        <span class="cov0" title="0">wl, err := data.SetWishlistVisibility(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), v, authz.Viewer(c))
+        if err != nil </span><span class="cov0" title="0">{
+                internalError(c, err)
+                return
+        }</span>
+        <span class="cov0" title="0">if wl == nil </span><span class="cov0" title="0">{
+                wishlistWriteFailure(c)
+                return
+        }</span>
+        <span class="cov0" title="0">c.JSON(http.StatusOK, data.WishlistToVO(wl, authz.Viewer(c), false, false))</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
