@@ -1,4 +1,16 @@
 
+## 0.14.0 - 2026-11-23
+
+### Added
+- Volume summary endpoint and wishlist 409 on duplicate volume
+
+
+### Fixed
+- Set ndots 2 on API pods
+- Bump game-room-data.go to v0.8.0
+
+
+
 ## 0.13.0 - 2026-10-29
 
 ### Added
