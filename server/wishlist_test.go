@@ -158,3 +158,28 @@ func TestNonOwnerWriteRequestsAreForbidden(t *testing.T) {
 		t.Fatalf("intruder mutated the wishlist despite 403s: %+v", stillThere)
 	}
 }
+
+func createTestWishlist(t *testing.T, userID, name string) objvo.WishlistVO {
+	t.Helper()
+	c, w := newTestContext(t, http.MethodPost, "/users/"+userID+"/wishlists", createWishlistRequest{Name: name}, gin.Params{{Key: "user_id", Value: userID}}, userID)
+	createWishlist(c)
+	if w.Code != http.StatusOK {
+		t.Fatalf("create wishlist status = %d, body = %s", w.Code, w.Body.String())
+	}
+	var wl objvo.WishlistVO
+	if err := json.Unmarshal(w.Body.Bytes(), &wl); err != nil {
+		t.Fatalf("decode wishlist: %v", err)
+	}
+	return wl
+}
+
+func addTestWishlistEntry(t *testing.T, userID, wishlistID, volumeID string, wantStatus int) *httptest.ResponseRecorder {
+	t.Helper()
+	params := gin.Params{{Key: "user_id", Value: userID}, {Key: "wishlist_id", Value: wishlistID}}
+	c, w := newTestContext(t, http.MethodPost, "/users/"+userID+"/wishlists/"+wishlistID+"/entries", volumeEntryRequest{VolumeID: volumeID, VolumeTitle: "Vol"}, params, userID)
+	addWishlistEntry(c)
+	if w.Code != wantStatus {
+		t.Fatalf("add wishlist entry status = %d, want %d, body = %s", w.Code, wantStatus, w.Body.String())
+	}
+	return w
+}

@@ -21,7 +21,7 @@ require (
 	github.com/sweetrpg/api-core.go v0.4.0
 	github.com/sweetrpg/authz-client.go v0.2.0
 	github.com/sweetrpg/common.go v0.0.16
-	github.com/sweetrpg/game-room-data.go v0.7.0
+	github.com/sweetrpg/game-room-data.go v0.8.0
 	github.com/sweetrpg/game-room-objects.go v0.3.1
 	github.com/sweetrpg/mongodb.go v0.0.193
 	go.mongodb.org/mongo-driver v1.17.9

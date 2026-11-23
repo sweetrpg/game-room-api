@@ -1166,6 +1166,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/{user_id}/volumes/{volume_id}/summary": {
+            "get": {
+                "description": "The caller's library, wishlist, table and open-loan state for one catalog volume. Owner-only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "summary"
+                ],
+                "summary": "Volume summary",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "example": "user-123",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "example": "vol-123",
+                        "description": "Volume ID",
+                        "name": "volume_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.VolumeSummaryVO"
+                        }
+                    },
+                    "403": {
+                        "description": "path user is not the caller",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/users/{user_id}/wishlists": {
             "get": {
                 "description": "List a user's wishlists, filtered to what the caller may see.",
@@ -1423,6 +1475,12 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "409": {
+                        "description": "volume is already on another of the user's wishlists",
+                        "schema": {
+                            "$ref": "#/definitions/server.wishlistConflictVO"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -1659,6 +1717,63 @@ const docTemplate = `{
                 }
             }
         },
+        "server.SummaryLibraryVO": {
+            "type": "object",
+            "properties": {
+                "added_at": {
+                    "type": "string"
+                },
+                "present": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "server.SummaryLoanVO": {
+            "type": "object",
+            "properties": {
+                "borrower_name": {
+                    "type": "string",
+                    "example": "Jordan"
+                },
+                "borrower_user_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "loan-123"
+                },
+                "lent_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "server.SummaryTableVO": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "tbl-456"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Friday night"
+                }
+            }
+        },
+        "server.SummaryWishlistVO": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "wl-789"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Birthday wishlist"
+                }
+            }
+        },
         "server.TableVO": {
             "type": "object",
             "properties": {
@@ -1703,6 +1818,26 @@ const docTemplate = `{
                     "additionalProperties": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "server.VolumeSummaryVO": {
+            "type": "object",
+            "properties": {
+                "library": {
+                    "$ref": "#/definitions/server.SummaryLibraryVO"
+                },
+                "loan": {
+                    "$ref": "#/definitions/server.SummaryLoanVO"
+                },
+                "tables": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/server.SummaryTableVO"
+                    }
+                },
+                "wishlist": {
+                    "$ref": "#/definitions/server.SummaryWishlistVO"
                 }
             }
         },
@@ -1825,6 +1960,26 @@ const docTemplate = `{
                 "volume_title": {
                     "type": "string",
                     "example": "Curse of Strahd"
+                }
+            }
+        },
+        "server.wishlistConflictVO": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "conflict"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "wishlist_id": {
+                    "type": "string",
+                    "example": "wl-789"
+                },
+                "wishlist_name": {
+                    "type": "string",
+                    "example": "Birthday wishlist"
                 }
             }
         },

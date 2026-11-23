@@ -304,8 +304,8 @@ github.com/sweetrpg/authz-client.go v0.2.0 h1:HYzR872fxO/JvSgdWPvdc67bI/5OgmbNNH
 github.com/sweetrpg/authz-client.go v0.2.0/go.mod h1:D5v5R+rW71cy298b7dMaAPTtWpkAntqGMFN3vQdkaSA=
 github.com/sweetrpg/common.go v0.0.16 h1:XT8PwUXz0BOMIITXLjw3G6rEjjRUEs0Xs4+R9o2fVBk=
 github.com/sweetrpg/common.go v0.0.16/go.mod h1:PVpjDIeB/bZYJZk5fc8whuqVJE8K5k/DsO3o+aZFEcE=
-github.com/sweetrpg/game-room-data.go v0.7.0 h1:abmn76YW2vYsOW94YNTdfj+diU68Z0GliKFtcbvN+x4=
-github.com/sweetrpg/game-room-data.go v0.7.0/go.mod h1:EnaP0zrjoD2xOZVhQRgYdTwt8AImhWhasqmnO/tlVaM=
+github.com/sweetrpg/game-room-data.go v0.8.0 h1:GuUjCE552KVRgIiuSrRE6tY4NPbAyAqHpoZ6CRqzkLY=
+github.com/sweetrpg/game-room-data.go v0.8.0/go.mod h1:ZI9N42Q1FCjkX3jkcGJksBFOi026upF8BhZmp2Z+o0Q=
 github.com/sweetrpg/game-room-objects.go v0.3.1 h1:GBV7t/GFT50FfnxL+7HV855kU3aoppXfSkZ4kGzkVZM=
 github.com/sweetrpg/game-room-objects.go v0.3.1/go.mod h1:az0qPJQp3aYUI6h6AB/qws0sFvmCWdwDrVDj4YcYyXY=
 github.com/sweetrpg/model-core.go v0.1.0 h1:ac8kdyj7oLN706JYyUvMB4T0HRkq9gmzObn3YMUTqCo=
