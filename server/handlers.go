@@ -12,5 +12,6 @@ func SetupHandlers(g *gin.Engine, cache persistence.CacheStore, ttls cachettl.Co
 	setupWishlistHandlers(g, cache, ttls, authzClient)
 	setupTableHandlers(g, cache, ttls, authzClient)
 	setupLoanHandlers(g, cache, ttls, authzClient)
+	setupSummaryHandlers(g, authzClient)
 	setupStatusHandlers(g)
 }
