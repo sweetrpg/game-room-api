@@ -55,6 +55,45 @@ definitions:
       volume_id:
         type: string
     type: object
+  server.SummaryLibraryVO:
+    properties:
+      added_at:
+        type: string
+      present:
+        example: true
+        type: boolean
+    type: object
+  server.SummaryLoanVO:
+    properties:
+      borrower_name:
+        example: Jordan
+        type: string
+      borrower_user_id:
+        type: string
+      id:
+        example: loan-123
+        type: string
+      lent_at:
+        type: string
+    type: object
+  server.SummaryTableVO:
+    properties:
+      id:
+        example: tbl-456
+        type: string
+      name:
+        example: Friday night
+        type: string
+    type: object
+  server.SummaryWishlistVO:
+    properties:
+      id:
+        example: wl-789
+        type: string
+      name:
+        example: Birthday wishlist
+        type: string
+    type: object
   server.TableVO:
     properties:
       created_at:
@@ -85,6 +124,19 @@ definitions:
         additionalProperties:
           type: string
         type: object
+    type: object
+  server.VolumeSummaryVO:
+    properties:
+      library:
+        $ref: '#/definitions/server.SummaryLibraryVO'
+      loan:
+        $ref: '#/definitions/server.SummaryLoanVO'
+      tables:
+        items:
+          $ref: '#/definitions/server.SummaryTableVO'
+        type: array
+      wishlist:
+        $ref: '#/definitions/server.SummaryWishlistVO'
     type: object
   server.WishlistVO:
     properties:
@@ -166,6 +218,20 @@ definitions:
         type: string
       volume_title:
         example: Curse of Strahd
+        type: string
+    type: object
+  server.wishlistConflictVO:
+    properties:
+      error:
+        example: conflict
+        type: string
+      message:
+        type: string
+      wishlist_id:
+        example: wl-789
+        type: string
+      wishlist_name:
+        example: Birthday wishlist
         type: string
     type: object
   vo.ErrorVO:
@@ -1017,6 +1083,43 @@ paths:
       summary: Remove table volume
       tags:
       - tables
+  /users/{user_id}/volumes/{volume_id}/summary:
+    get:
+      description: The caller's library, wishlist, table and open-loan state for one
+        catalog volume. Owner-only.
+      parameters:
+      - description: User ID
+        example: user-123
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Volume ID
+        example: vol-123
+        in: path
+        name: volume_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.VolumeSummaryVO'
+        "403":
+          description: path user is not the caller
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Volume summary
+      tags:
+      - summary
   /users/{user_id}/wishlists:
     get:
       description: List a user's wishlists, filtered to what the caller may see.
@@ -1192,6 +1295,10 @@ paths:
           schema:
             additionalProperties: true
             type: object
+        "409":
+          description: volume is already on another of the user's wishlists
+          schema:
+            $ref: '#/definitions/server.wishlistConflictVO'
         "500":
           description: Internal Server Error
           schema:

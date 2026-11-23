@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-contrib/cache"
@@ -11,6 +12,15 @@ import (
 	"github.com/sweetrpg/game-room-api/cachettl"
 	"github.com/sweetrpg/game-room-data.go/data"
 )
+
+// wishlistConflictVO is the 409 body when a volume is already on another of the user's
+// wishlists; WishlistID/WishlistName identify the one it is on, so the caller can offer to move it.
+type wishlistConflictVO struct {
+	Error        string `json:"error" example:"conflict"`
+	Message      string `json:"message"`
+	WishlistID   string `json:"wishlist_id" example:"wl-789"`
+	WishlistName string `json:"wishlist_name" example:"Birthday wishlist"`
+}
 
 type createWishlistRequest struct {
 	Name string `json:"name" example:"Birthday wishlist"`
@@ -168,6 +178,7 @@ func deleteWishlist(c *gin.Context) {
 //	@Failure		400				{object}	apiv.ErrorVO		"volume_id missing"
 //	@Failure		403				{object}	apiv.ErrorVO		"wishlist exists but is owned by a different user"
 //	@Failure		404				{object}	map[string]interface{}	"no wishlist with this ID exists"
+//	@Failure		409				{object}	wishlistConflictVO	"volume is already on another of the user's wishlists"
 //	@Failure		500				{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/wishlists/{wishlist_id}/entries [post]
 func addWishlistEntry(c *gin.Context) {
@@ -177,6 +188,16 @@ func addWishlistEntry(c *gin.Context) {
 		return
 	}
 	wl, err := data.AddWishlistEntry(c.Request.Context(), c.Param("wishlist_id"), c.Param("user_id"), req.VolumeID, req.VolumeTitle, authz.Viewer(c))
+	var conflict *data.WishlistConflictError
+	if errors.As(err, &conflict) {
+		c.JSON(http.StatusConflict, wishlistConflictVO{
+			Error:        "conflict",
+			Message:      "Volume is already on another of your wishlists",
+			WishlistID:   conflict.WishlistID,
+			WishlistName: conflict.WishlistName,
+		})
+		return
+	}
 	if err != nil {
 		internalError(c, err)
 		return
