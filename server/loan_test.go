@@ -80,6 +80,19 @@ func TestCreateLoanRequestRejectsNeitherBorrowerField(t *testing.T) {
 	}
 }
 
+func TestCreateLoanRequestRejectsUserIDWithoutName(t *testing.T) {
+	setupTestDB(t)
+	lender := primitive.NewObjectID().Hex()
+
+	c, w := newTestContext(t, http.MethodPost, "/users/"+lender+"/loans",
+		createLoanRequest{VolumeID: primitive.NewObjectID().Hex(), BorrowerUserID: strPtr(primitive.NewObjectID().Hex())},
+		gin.Params{{Key: "user_id", Value: lender}}, lender)
+	createLoan(c)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400, body = %s", w.Code, w.Body.String())
+	}
+}
+
 func TestLoanNonOwnerRequestsAreForbidden(t *testing.T) {
 	setupTestDB(t)
 	owner := primitive.NewObjectID().Hex()
