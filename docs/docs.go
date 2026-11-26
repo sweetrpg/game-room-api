@@ -482,7 +482,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Lend a catalog volume to a platform-linked user or a free-form name. Exactly one of borrower_user_id or borrower_name is required; when borrower_user_id is given, borrower_name must also be supplied as that user's display name.",
+                "description": "Lend a catalog volume to a platform-linked user or a free-form name. borrower_name is always required; for a platform-linked borrower, send borrower_user_id too, with that user's display name as borrower_name.",
                 "consumes": [
                     "application/json"
                 ],
@@ -520,7 +520,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "volume_id missing, or borrower fields don't satisfy the exactly-one-of rule",
+                        "description": "volume_id or borrower_name missing",
                         "schema": {
                             "$ref": "#/definitions/vo.ErrorVO"
                         }

@@ -13,9 +13,9 @@ import (
 	"github.com/sweetrpg/game-room-data.go/data"
 )
 
-// createLoanRequest accepts exactly one of BorrowerUserID or BorrowerName; when BorrowerUserID is
-// given, BorrowerName must also be supplied (the caller already has the linked user's display
-// name from its own user search - see design.md's borrower resolution decision).
+// createLoanRequest identifies the borrower by BorrowerName alone (free-form), or by
+// BorrowerUserID together with BorrowerName (platform-linked: the caller already has the linked
+// user's display name from its own user search - see design.md's borrower resolution decision).
 type createLoanRequest struct {
 	VolumeID       string  `json:"volume_id" example:"vol-123"`
 	BorrowerUserID *string `json:"borrower_user_id" example:"user-456"`
@@ -98,14 +98,14 @@ func listLoansBorrowed(c *gin.Context) {
 // Create a loan.
 //
 //	@Summary		Create loan
-//	@Description	Lend a catalog volume to a platform-linked user or a free-form name. Exactly one of borrower_user_id or borrower_name is required; when borrower_user_id is given, borrower_name must also be supplied as that user's display name.
+//	@Description	Lend a catalog volume to a platform-linked user or a free-form name. borrower_name is always required; for a platform-linked borrower, send borrower_user_id too, with that user's display name as borrower_name.
 //	@Tags			loans
 //	@Accept			json
 //	@Produce		json
 //	@Param			user_id	path		string				true	"User ID (the lender)"	example(user-123)
 //	@Param			body	body		createLoanRequest	true	"Loan details"
 //	@Success		200		{object}	LoanVO
-//	@Failure		400		{object}	apiv.ErrorVO	"volume_id missing, or borrower fields don't satisfy the exactly-one-of rule"
+//	@Failure		400		{object}	apiv.ErrorVO	"volume_id or borrower_name missing"
 //	@Failure		409		{object}	apiv.ErrorVO	"volume is already out on an open loan"
 //	@Failure		500		{object}	apiv.ErrorVO
 //	@Router			/users/{user_id}/loans [post]
@@ -115,8 +115,8 @@ func createLoan(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "volume_id is required"})
 		return
 	}
-	if (req.BorrowerUserID == nil || *req.BorrowerUserID == "") == (req.BorrowerName == "") {
-		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "exactly one of borrower_user_id or borrower_name is required"})
+	if (req.BorrowerUserID == nil || *req.BorrowerUserID == "") && req.BorrowerName == "" {
+		c.JSON(http.StatusBadRequest, apiv.ErrorVO{Error: "bad_request", Message: "borrower_name is required, with borrower_user_id for a platform-linked borrower"})
 		return
 	}
 	if req.BorrowerUserID != nil && *req.BorrowerUserID != "" && req.BorrowerName == "" {
