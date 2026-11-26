@@ -24,6 +24,12 @@ go build -v ./...
 go test -v -coverprofile coverage.out ./...
 ```
 
+The database-backed tests in `server` and `internal/consumer` need a MongoDB and fail without one:
+
+```bash
+TEST_DB_URI=mongodb://localhost:27017/unit-tests go test ./...
+```
+
 ## Documentation
 
 API documentation is available at `http://localhost:8000/swagger/index.html` when the server is
