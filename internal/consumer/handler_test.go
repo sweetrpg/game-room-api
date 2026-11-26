@@ -18,7 +18,7 @@ func setupTestDB(t *testing.T) {
 	t.Helper()
 	uri := os.Getenv("TEST_DB_URI")
 	if uri == "" {
-		t.Skip("TEST_DB_URI not set - this repo's CI has no Mongo service container yet, skip DB-backed tests")
+		t.Fatal("TEST_DB_URI is unset: this test needs a MongoDB, e.g. TEST_DB_URI=mongodb://localhost:27017/unit-tests")
 	}
 	_ = os.Setenv(constants.DB_URI, uri)
 	database.SetupDatabase()
